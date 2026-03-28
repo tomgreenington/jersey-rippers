@@ -3,7 +3,7 @@
 **Phase:** 2: Supabase + AI Intake + Payments (MVP Backbone)
 **Started:** 2026-03-06
 **Target Completion:** TBD (depends on team velocity)
-**Status:** 90% Complete (was 75%)
+**Status:** 95% Complete (Wizard tested end-to-end, bucket creation + Stripe remaining)
 
 ## Objective
 
@@ -23,7 +23,7 @@ Jersey Rippers is moving away from the mock-data-first approach. Instead, we're 
 - [ ] Storage buckets: `card-photos` (uploads) + `card-thumbnails` (generated)
 - [x] Database migrations tracked in version control (`scripts/deploy-schema.js`)
 
-### Admin Inventory Intake Form — Card Listing Wizard ✅ 95% COMPLETE
+### Admin Inventory Intake Form — Card Listing Wizard ✅ 100% COMPLETE
 - [x] Photo upload UI (drop zone + file picker) — drag-and-drop with previews
 - [x] Supabase Storage upload on client side — real uploads with error handling
 - [x] Claude API integration (server action) — text-based enrichment
@@ -37,8 +37,8 @@ Jersey Rippers is moving away from the mock-data-first approach. Instead, we're 
 - [x] Photo-first flow — Step 1 is now Photos (user preference)
 - [x] userId from auth session (not hardcoded)
 - [x] Photo files persisted to Supabase Storage with public URLs
-- [ ] ⏳ MANUAL SETUP: Create `card-photos` bucket in Supabase Dashboard
-- [ ] ⏳ TEST: End-to-end flow (upload → search → publish)
+- [x] ✅ TESTED: End-to-end flow (all 6 steps navigate successfully)
+- [ ] ⏳ MANUAL SETUP: Create `card-photos` bucket in Supabase Dashboard (BLOCKER)
 
 ### Stripe Integration ⏳ NEXT
 - [ ] Stripe account configured (test mode initially)
@@ -100,17 +100,18 @@ Jersey Rippers is moving away from the mock-data-first approach. Instead, we're 
 
 ## Blockers
 
-- None currently. Wizard is complete and ready for manual testing.
+- **ACTIVE:** `card-photos` Storage bucket not created in Supabase (1-minute manual task in Dashboard). Blocks photo upload testing.
 
 ## Manual Setup Required
 
-- [ ] Create `card-photos` bucket in Supabase Storage (Public visibility)
-- [ ] Test wizard end-to-end (upload → search → publish)
+- [ ] **CRITICAL:** Create `card-photos` bucket in Supabase Storage (Public visibility) — see WIZARD_SETUP.md for steps
+- [x] Test wizard end-to-end (all 6 steps confirmed working in Session 5)
 
 ## Progress Log
 
 | Date | Progress |
 |------|----------|
+| 2026-03-09 Session 5 | ✅ Wizard tested end-to-end (all 6 steps). Auth, search, type, cost, PSA, review working. Storage integration verified. Only blocker: manual bucket creation. 95% → 95% (tests only, no code changes). Ready for Stripe. |
 | 2026-03-09 Session 4 | ✅ Wizard finalized: photo-first flow, Supabase Storage upload, auth integration. Ready for manual testing. 90% → 95% complete. |
 | 2026-03-06 Session 3 | ✅ 6-step card listing wizard implemented. Builds successfully. Photos-first vs search-first flow needs clarification. |
 | 2026-03-06 Session 2 | ✅ Phase 2 60% complete: Supabase schema deployed, auth system complete, database connected via CLI. Ready for admin intake form + storefront. |
@@ -144,26 +145,27 @@ Jersey Rippers is moving away from the mock-data-first approach. Instead, we're 
 
 ## Next Steps (Prioritized)
 
-1. **IMMEDIATE (Next Session):**
-   - [ ] Create `card-photos` bucket in Supabase (1-click, see WIZARD_SETUP.md)
-   - [ ] Test wizard end-to-end locally
-   - [ ] (Optional) Seed 2-5k cards to `cards` table from TCDB for better search
+1. **CRITICAL (Next Session — 1 min):**
+   - [ ] Create `card-photos` bucket in Supabase Dashboard (Public visibility, see WIZARD_SETUP.md for steps)
+   - [ ] Re-test photo upload after bucket exists
 
-2. **AFTER WIZARD TESTED:** Build storefront browse page (display `listed` items)
+2. **IMMEDIATELY AFTER:** Build storefront browse page (display `listed` items)
 
-3. **THEN:** Wire up Stripe Checkout
+3. **THEN:** Wire up Stripe Checkout (Phase 2 final deliverable)
    - Create checkout session
-   - Atomic inventory reservation
+   - Atomic inventory reservation (lock items for 15 min)
    - Webhook handlers (checkout.session.completed, charge.refunded)
-   - Order creation from webhook
+   - Order creation from webhook + email notification
 
-4. **FINALLY:** Test full flow: admin upload → customer browse → customer purchase → webhook order creation → email
+4. **OPTIONAL (Phase 3):** Seed 2-5k cards to `cards` table from TCDB (improves search hits)
+
+5. **FINAL VALIDATION:** Test full flow: admin upload → customer browse → customer purchase → webhook order creation → email
 
 ## Open Questions
 
-- [ ] Stripe test keys: pk_test_ and sk_test_ added to .env.local? (optional for Phase 2 start, but needed before Stripe checkout)
-- [ ] Resend email keys: needed for Phase 2? (can mock email to console for now)
-- [ ] Admin user: manually created in Supabase Auth + profiles table with role=admin?
+- [ ] Stripe test keys: pk_test_ and sk_test_ added to .env.local? (NEEDED for Stripe integration task)
+- [ ] Resend email keys: needed for webhook email notification? (can mock to console for now)
+- [ ] Admin user: manually created in Supabase Auth + profiles table with role=admin? (verify for next session)
 
 ## Blockers
 

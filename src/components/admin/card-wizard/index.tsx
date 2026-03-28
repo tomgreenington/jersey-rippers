@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -12,6 +12,7 @@ import StepType from './step-type';
 import StepCost from './step-cost';
 import StepComps from './step-comps';
 import StepReview from './step-review';
+import { ensureCardPhotosBucket } from '@/lib/supabase/storage-actions';
 import type { InventoryType, Condition } from '@/types';
 
 interface WizardState {
@@ -87,6 +88,14 @@ const STEPS = ['Photos', 'Search', 'Type & Grade', 'Cost', 'PSA Comps', 'Review'
 export default function CardWizard() {
   const [currentStep, setCurrentStep] = useState(0);
   const [wizardState, setWizardState] = useState<WizardState>(INITIAL_STATE);
+
+  // Ensure storage bucket exists on mount
+  useEffect(() => {
+    ensureCardPhotosBucket().catch((err) => {
+      console.error('Failed to ensure storage bucket:', err);
+      // Continue anyway - user can debug from browser console
+    });
+  }, []);
 
   const updateState = (updates: Partial<WizardState>) => {
     setWizardState((prev) => ({ ...prev, ...updates }));
