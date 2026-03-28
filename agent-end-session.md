@@ -1,5 +1,27 @@
 # Agent End Session
 
+## Session 7 Summary (2026-03-28)
+
+**Completed:**
+- ✅ Automated `card-photos` Storage bucket creation (no manual Supabase steps needed)
+- ✅ Added `created_by` field to track which staff member uploaded each card
+- ✅ Simplified card wizard from 6 steps to 4 (removed search, PSA, Claude enrichment)
+- ✅ New wizard flow: Photos → Card Info (manual) → Price → Review & Publish
+- ✅ GitHub repo created and all commits pushed to tomgreenington/jersey-rippers
+- ✅ Build passes TypeScript cleanly, production-ready
+
+**Stopped at:** All Phase 2 code complete. Ready for Vercel deployment and partner testing.
+
+**Next session should:**
+1. Deploy to Vercel (5 min)
+2. Create partner admin accounts in Supabase (5 min)
+3. Have partners test intake workflow (30+ min)
+4. Start Phase 3: Build customer storefront (browse → checkout)
+
+**Blockers:** None. All code working.
+
+---
+
 **Complete this checklist before ending any session.**
 
 The goal is to leave the project in a state where the next agent (or future you) can pick up immediately without loss of context.
