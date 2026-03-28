@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { Menu, ShoppingCart, Search, Moon, Sun } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -58,13 +59,23 @@ export function StoreHeader() {
         {/* Top bar */}
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
-          <Link href="/" className="flex flex-col items-start gap-0">
-            <span className="text-lg font-black tracking-tighter text-primary lg:text-xl">
-              BUCKS BREAKS
-            </span>
-            <span className="text-[10px] font-semibold uppercase text-secondary lg:text-xs">
-              Premium Cards
-            </span>
+          <Link href="/" className="flex items-center gap-2">
+            <Image
+              src="/bucksbreaks.png"
+              alt="Bucks Breaks"
+              width={48}
+              height={48}
+              className="h-12 w-12 lg:h-14 lg:w-14"
+              priority
+            />
+            <div className="hidden flex-col items-start gap-0 sm:flex">
+              <span className="text-sm font-black tracking-tighter text-primary lg:text-base">
+                BUCKS BREAKS
+              </span>
+              <span className="text-[9px] font-semibold uppercase text-secondary lg:text-[10px]">
+                Premium Cards
+              </span>
+            </div>
           </Link>
 
           {/* Desktop Nav */}
