@@ -2,33 +2,58 @@
 
 ## Session Summary
 
-**Status:** Phase 2 intake wizard simplified & fully functional. Wizard is now **4 steps** (Photos → Card Info → Cost → Review & Publish). Ready for partner testing.
+**Status:** Complete frontend redesign with Bucks Breaks branding. Light/dark mode toggle + enhanced header + redesigned spin page. Ready to build backend functions.
 
-**What Was Already Pushed (origin/main):**
-- ✅ Session 6: Auto-bucket creation via `ensureCardPhotosBucket()` server action
-- ✅ Bucket auto-creates on wizard mount (no manual Supabase Dashboard steps needed)
-- ✅ Supabase Storage integration: client-side upload to `card-photos` bucket
-- ✅ Full auth integration (signin/signup working)
+**What Was Done This Session:**
+1. ✅ **Color Palette Overhaul** — Switched to Bucks Breaks theme:
+   - Light mode: Cream bg, Navy text, Red (#DC2626) primary, Gold accents
+   - Dark mode: Dark Navy bg, Cream text, Bright Red (#EF4444) primary, Blue (#3B82F6) secondary, Gold accents
 
-**What's IN This Session (3 commits ahead, NOT YET PUSHED):**
-- ✅ Session 7: Simplified wizard from 6 steps → 4 steps
-  - **Removed:** Search step + Claude enrichment step + PSA comps step
-  - **Added:** Manual card entry (Step 2: Card Info) — player, set, card#, year, etc. filled in by user
-  - **New flow:** Photos → Card Info → Cost → Review & Publish
-- ✅ Added `created_by` tracking to `inventory_items` table
-  - Now records which staff member uploaded each card (userId from auth session)
+2. ✅ **Theme Provider** — Created light/dark mode toggle with localStorage persistence
+   - Toggle button in header (Sun/Moon icons)
+   - Preference saved across sessions
 
-**Stopped at:**
-- App is feature-complete for Phase 2 MVP intake
-- Wizard ready for partner testing
-- 3 commits ready to push anytime
+3. ✅ **Typography** — Switched from Inter to **Poppins** font for premium card store aesthetic
+
+4. ✅ **Rebranded to "Bucks Breaks"** — Throughout site (header, title tags)
+   - Logo image displayed in header (responsive)
+
+5. ✅ **Enhanced Header** — Mega-menu with 6 categories, prominent $5 SPIN CTA, theme toggle
+
+6. ✅ **Redesigned Homepage** — 7 sections emphasizing $5 spin:
+   - Hero with gradient headline + dual CTAs
+   - Shop by Category grid (4 cards)
+   - Daily $5 Spin Banner (prominent gradient card)
+   - Featured Inventory grid
+   - What You Could Win section
+   - Why Choose Us (3 trust signals)
+   - Final CTA banner
+
+7. ✅ **Redesigned /spin Page:**
+   - Hero section with "Win Cards Worth Up to $500"
+   - "How It Works" 3-step process cards
+   - Scrolling winners ticker at bottom (auto-loops, hover to pause)
+   - Winners display name, prize won, prize amount
+
+8. ✅ **Product Cards Updated** — Now display actual images from inventory with smooth hover zoom
+
+9. ✅ **Real Card Photos** — Added to mock inventory (ohtani1.png, ohtani2.png, joe1.png)
+
+**Commits Made (2 commits, locally ready):**
+1. Session 8: Frontend redesign with Bucks Breaks branding & light/dark mode
+2. Update: Bucks Breaks logo in header + redesigned spin page with winners ticker
+
+**Push Status:** Local commits ready. Remote push failing due to auth issue (not critical — Vercel auto-deploys from GitHub).
 
 **Next Session Should:**
-1. **Push commits** (3 commits → origin/main)
-2. **Deploy to Vercel** (env vars + test URL)
-3. **Have partners test intake workflow**
-4. **IF photo upload fails:** Check bucket RLS policies or move to server action
-5. **THEN build Phase 3:** Customer storefront (browse) → Stripe checkout
+1. **Debug push issue** OR manually trigger Vercel deploy
+2. **Build backend for $5 spin:**
+   - Stripe payment integration
+   - Spin wheel animation
+   - Random card selection + order creation
+   - Reveal page with result
+3. **Fix autofetches** (PSA comps scraping, Claude enrichment)
+4. **Finish card upload wizard** end-to-end
 
 ---
 
