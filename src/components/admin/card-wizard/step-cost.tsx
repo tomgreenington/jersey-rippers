@@ -5,23 +5,24 @@ import { Input } from '@/components/ui/input';
 
 interface StepCostProps {
   state: {
-    costBasis: number | null;
+    price: number | null;
   };
   updateState: (updates: any) => void;
   onNext: () => void;
 }
 
 export default function StepCost({ state, updateState, onNext }: StepCostProps) {
-  const canContinue = state.costBasis !== null && state.costBasis >= 0;
+  const canContinue = state.price !== null && state.price > 0;
 
-  const handleCostChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     if (value === '' || value === '0') {
-      updateState({ costBasis: null });
+      updateState({ price: null });
     } else {
       const numValue = parseFloat(value);
       if (!isNaN(numValue)) {
-        updateState({ costBasis: numValue });
+        // Convert to cents for internal storage
+        updateState({ price: numValue * 100 });
       }
     }
   };
@@ -29,8 +30,8 @@ export default function StepCost({ state, updateState, onNext }: StepCostProps) 
   return (
     <div className="space-y-6">
       <div>
-        <label className="text-sm font-medium block mb-2">Cost Basis (USD)</label>
-        <p className="text-sm text-muted-foreground mb-3">What did you pay for this card?</p>
+        <label className="text-sm font-medium block mb-2">Selling Price (USD)</label>
+        <p className="text-sm text-muted-foreground mb-3">What should this card sell for?</p>
         <div className="flex items-center gap-2">
           <span className="text-xl font-medium">$</span>
           <Input
@@ -38,8 +39,8 @@ export default function StepCost({ state, updateState, onNext }: StepCostProps) 
             placeholder="0.00"
             step="0.01"
             min="0"
-            value={state.costBasis ?? ''}
-            onChange={handleCostChange}
+            value={state.price ? (state.price / 100).toFixed(2) : ''}
+            onChange={handlePriceChange}
             className="text-lg"
           />
         </div>
@@ -51,7 +52,7 @@ export default function StepCost({ state, updateState, onNext }: StepCostProps) 
           disabled={!canContinue}
           className="bg-red-600 hover:bg-red-700"
         >
-          Continue to PSA Comps
+          Continue to Review
         </Button>
       </div>
     </div>

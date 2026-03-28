@@ -6,6 +6,10 @@ import { InventoryType, Condition } from '@/types';
 
 interface StepTypeProps {
   state: {
+    player: string;
+    setName: string;
+    cardNumber: string;
+    year: number | null;
     type: InventoryType;
     condition: Condition | null;
     gradeCompany: string | null;
@@ -30,10 +34,51 @@ const GRADE_COMPANIES = ['PSA', 'BGS', 'CGC', 'SGC'];
 export default function StepType({ state, updateState, onNext }: StepTypeProps) {
   const isSingle = state.type === 'single';
   const isSlab = state.type === 'slab';
-  const canContinue = isSingle ? state.condition : isSlab ? state.gradeCompany && state.gradeValue : true;
+  const hasCardInfo = state.player && state.setName && state.cardNumber;
+  const canContinue = hasCardInfo && (isSingle ? state.condition : isSlab ? state.gradeCompany && state.gradeValue : true);
 
   return (
     <div className="space-y-6">
+      {/* Card Information */}
+      <div className="space-y-4">
+        <h3 className="font-medium">Card Information</h3>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="text-sm font-medium block mb-2">Player/Subject</label>
+            <Input
+              placeholder="e.g., LeBron James"
+              value={state.player}
+              onChange={(e) => updateState({ player: e.target.value })}
+            />
+          </div>
+          <div>
+            <label className="text-sm font-medium block mb-2">Set Name</label>
+            <Input
+              placeholder="e.g., 2003-04 Upper Deck"
+              value={state.setName}
+              onChange={(e) => updateState({ setName: e.target.value })}
+            />
+          </div>
+          <div>
+            <label className="text-sm font-medium block mb-2">Card Number</label>
+            <Input
+              placeholder="e.g., 23, #23/100"
+              value={state.cardNumber}
+              onChange={(e) => updateState({ cardNumber: e.target.value })}
+            />
+          </div>
+          <div>
+            <label className="text-sm font-medium block mb-2">Year (Optional)</label>
+            <Input
+              type="number"
+              placeholder="e.g., 2003"
+              value={state.year || ''}
+              onChange={(e) => updateState({ year: e.target.value ? parseInt(e.target.value) : null })}
+            />
+          </div>
+        </div>
+      </div>
+
       {/* Type Selection */}
       <div>
         <label className="text-sm font-medium block mb-3">Card Type</label>

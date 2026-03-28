@@ -7,10 +7,8 @@ import { Separator } from '@/components/ui/separator';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 
 import StepPhotos from './step-photos';
-import StepSearch from './step-search';
 import StepType from './step-type';
 import StepCost from './step-cost';
-import StepComps from './step-comps';
 import StepReview from './step-review';
 import { ensureCardPhotosBucket } from '@/lib/supabase/storage-actions';
 import type { InventoryType, Condition } from '@/types';
@@ -75,7 +73,7 @@ const INITIAL_STATE: WizardState = {
   costBasis: null,
 
   price: null,
-  spinPool: false,
+  spinPool: false, // Auto-assign if no price set
 
   photos: [],
 
@@ -83,7 +81,7 @@ const INITIAL_STATE: WizardState = {
   description: null,
 };
 
-const STEPS = ['Photos', 'Search', 'Type & Grade', 'Cost', 'PSA Comps', 'Review'];
+const STEPS = ['Photos', 'Card Info', 'Cost', 'Review'];
 
 export default function CardWizard() {
   const [currentStep, setCurrentStep] = useState(0);
@@ -118,14 +116,10 @@ export default function CardWizard() {
       case 0:
         return <StepPhotos state={wizardState} updateState={updateState} onNext={handleNext} />;
       case 1:
-        return <StepSearch state={wizardState} updateState={updateState} onNext={handleNext} />;
-      case 2:
         return <StepType state={wizardState} updateState={updateState} onNext={handleNext} />;
-      case 3:
+      case 2:
         return <StepCost state={wizardState} updateState={updateState} onNext={handleNext} />;
-      case 4:
-        return <StepComps state={wizardState} updateState={updateState} onNext={handleNext} />;
-      case 5:
+      case 3:
         return <StepReview state={wizardState} updateState={updateState} />;
       default:
         return null;

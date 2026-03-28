@@ -60,10 +60,8 @@ export default function StepReview({ state }: StepReviewProps) {
     loadSession();
   }, []);
 
-  const marginPercent =
-    state.costBasis && state.price
-      ? (((state.price / 100 - state.costBasis) / state.costBasis) * 100).toFixed(1)
-      : null;
+  // Price is already in cents from the cost step
+  const displayPrice = state.price ? `$${(state.price / 100).toFixed(2)}` : 'Not set';
 
   const handlePublish = async () => {
     await handleCreate(true);
@@ -91,19 +89,11 @@ export default function StepReview({ state }: StepReviewProps) {
           set_name: state.setName,
           card_number: state.cardNumber,
           year: state.year ?? undefined,
-          team: state.team ?? undefined,
-          sport: state.sport ?? undefined,
-          position: state.position ?? undefined,
-          rarity: state.rarity ?? undefined,
-          rookie: state.rookie,
-          parallel_type: state.parallelType ?? undefined,
-          manufacturer: state.manufacturer ?? undefined,
           condition: state.condition ?? undefined,
           grade_company: state.gradeCompany ?? undefined,
           grade_value: state.gradeValue ?? undefined,
           cert_number: state.certNumber ?? undefined,
           price: state.price ?? 0,
-          cost_basis: state.costBasis ? Math.round(state.costBasis * 100) : undefined,
           photos: state.photos,
           quantity_on_hand: 1,
         },
@@ -222,30 +212,11 @@ export default function StepReview({ state }: StepReviewProps) {
           <p className="text-xs font-medium text-muted-foreground uppercase mb-3">Pricing</p>
           <div className="space-y-2 text-sm">
             <div>
-              <span className="text-muted-foreground">Cost Basis:</span>
-              <p className="font-medium">
-                {state.costBasis ? `$${state.costBasis.toFixed(2)}` : '—'}
-              </p>
-            </div>
-            <div>
               <span className="text-muted-foreground">Selling Price:</span>
               <p className="font-bold text-lg text-red-600">
-                {state.price ? `$${(state.price / 100).toFixed(2)}` : '—'}
+                {displayPrice}
               </p>
             </div>
-            {marginPercent && (
-              <div>
-                <span className="text-muted-foreground">Margin:</span>
-                <p className={`font-medium ${parseFloat(marginPercent) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {marginPercent}%
-                </p>
-              </div>
-            )}
-            {state.spinPool && (
-              <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-800">
-                <p className="font-medium">Spin Pool: Yes</p>
-              </div>
-            )}
           </div>
         </div>
 
