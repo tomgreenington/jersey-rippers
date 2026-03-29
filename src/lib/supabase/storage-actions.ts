@@ -44,10 +44,10 @@ export async function ensureCardPhotosBucket() {
 
 /**
  * Upload card photos using service role (bypasses RLS)
- * Called from client via server action
+ * Accepts base64-encoded file data from client
  */
 export async function uploadCardPhotos(
-  files: { name: string; data: Buffer }[]
+  files: { name: string; base64: string }[]
 ): Promise<{ success: boolean; urls?: string[]; error?: string }> {
   try {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -67,11 +67,15 @@ export async function uploadCardPhotos(
     const uploadedUrls: string[] = [];
 
     for (const file of files) {
+      // Convert base64 to Buffer for upload
+      const buffer = Buffer.from(file.base64, 'base64');
+
       const { data, error } = await supabase.storage
         .from('card-photos')
-        .upload(file.name, file.data, {
+        .upload(file.name, buffer, {
           cacheControl: '3600',
           upsert: false,
+          contentType: 'image/jpeg',
         });
 
       if (error) {

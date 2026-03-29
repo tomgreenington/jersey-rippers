@@ -98,7 +98,7 @@ export default function StepPhotos({ state, updateState, onNext }: StepPhotosPro
       const result = await uploadCardPhotos(
         filesToUpload.map(f => ({
           name: f.name,
-          data: Buffer.from(f.data, 'base64'),
+          base64: f.data,
         }))
       );
 
