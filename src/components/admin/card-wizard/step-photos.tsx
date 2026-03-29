@@ -3,7 +3,7 @@
 import { useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Upload, X, AlertCircle, Loader2 } from 'lucide-react';
-import { createClient } from '@supabase/supabase-js';
+import { uploadCardPhotos } from '@/lib/supabase/storage-actions';
 
 interface StepPhotosProps {
   state: {
@@ -20,10 +20,6 @@ export default function StepPhotos({ state, updateState, onNext }: StepPhotosPro
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState('');
 
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
 
   const handleFiles = (files: FileList) => {
     const newFiles = Array.from(files).filter((file) => file.type.startsWith('image/'));
@@ -72,49 +68,54 @@ export default function StepPhotos({ state, updateState, onNext }: StepPhotosPro
     setUploadError('');
 
     try {
-      const uploadedUrls: string[] = [];
+      // Convert File objects to base64 strings for server action
+      const filesToUpload: { name: string; data: string }[] = [];
 
       for (const item of previews) {
         const timestamp = Date.now();
         const randomStr = Math.random().toString(36).slice(2);
         const filename = `card-photo-${timestamp}-${randomStr}.jpg`;
 
-        console.log('Uploading:', filename);
+        // Read file as base64
+        const base64 = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            const result = reader.result as string;
+            // Extract base64 data (remove data:image/jpeg;base64, prefix)
+            const base64Data = result.split(',')[1];
+            resolve(base64Data);
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(item.file);
+        });
 
-        // Upload to Supabase Storage with service role (bypass RLS)
-        const { data, error } = await supabase.storage
-          .from('card-photos')
-          .upload(filename, item.file, {
-            cacheControl: '3600',
-            upsert: false,
-          });
-
-        if (error) {
-          console.error('Upload error:', error);
-          throw new Error(`Upload failed: ${error.message}`);
-        }
-
-        console.log('Upload success:', data);
-
-        // Get public URL
-        const { data: publicUrl } = supabase.storage
-          .from('card-photos')
-          .getPublicUrl(filename);
-
-        console.log('Public URL:', publicUrl.publicUrl);
-        uploadedUrls.push(publicUrl.publicUrl);
+        filesToUpload.push({ name: filename, data: base64 });
       }
 
-      console.log('All photos uploaded:', uploadedUrls);
+      console.log('Uploading', filesToUpload.length, 'photos via server action');
+
+      // Call server action to upload using service role
+      const result = await uploadCardPhotos(
+        filesToUpload.map(f => ({
+          name: f.name,
+          data: Buffer.from(f.data, 'base64'),
+        }))
+      );
+
+      if (!result.success) {
+        throw new Error(result.error || 'Upload failed');
+      }
+
+      console.log('All photos uploaded:', result.urls);
 
       // Update wizard state with uploaded URLs
-      updateState({ photos: uploadedUrls });
+      updateState({ photos: result.urls });
       setPreviews([]);
-      setIsUploading(false);
     } catch (err) {
       const error = err instanceof Error ? err.message : 'Unknown error';
       console.error('Upload error:', error);
       setUploadError(error);
+    } finally {
       setIsUploading(false);
     }
   };

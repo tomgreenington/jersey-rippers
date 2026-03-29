@@ -199,7 +199,6 @@ export async function createInventoryItem(
         storage_location: data.storage_location,
         spin_pool: data.spin_pool || false,
         created_by: userId,
-        updated_by: userId,
       })
       .select()
       .single();
