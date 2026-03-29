@@ -1,4 +1,5 @@
 import { getSession } from '@/lib/supabase/auth-actions';
+import { isUserAdmin } from '@/lib/supabase/admin-auth';
 import CardWizard from '@/components/admin/card-wizard';
 import { redirect } from 'next/navigation';
 
@@ -10,10 +11,14 @@ export const metadata = {
 export default async function InventoryNewPage() {
   const { session } = await getSession();
 
-  // TODO: Check if user is admin/staff
-  // For now, allow anyone to access. In production, verify role in Supabase.
   if (!session) {
-    redirect('/signin');
+    redirect('/admin/login');
+  }
+
+  // Check if user is admin
+  const isAdmin = await isUserAdmin(session.user?.id);
+  if (!isAdmin) {
+    redirect('/admin/login');
   }
 
   return (
