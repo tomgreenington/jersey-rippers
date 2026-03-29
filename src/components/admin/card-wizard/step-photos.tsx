@@ -63,7 +63,10 @@ export default function StepPhotos({ state, updateState, onNext }: StepPhotosPro
   };
 
   const uploadPhotos = async () => {
-    if (previews.length === 0) return;
+    if (previews.length === 0) {
+      setUploadError('No photos selected');
+      return;
+    }
 
     setIsUploading(true);
     setUploadError('');
@@ -73,9 +76,12 @@ export default function StepPhotos({ state, updateState, onNext }: StepPhotosPro
 
       for (const item of previews) {
         const timestamp = Date.now();
-        const filename = `card-photo-${timestamp}-${Math.random().toString(36).slice(2)}.jpg`;
+        const randomStr = Math.random().toString(36).slice(2);
+        const filename = `card-photo-${timestamp}-${randomStr}.jpg`;
 
-        // Upload to Supabase Storage
+        console.log('Uploading:', filename);
+
+        // Upload to Supabase Storage with service role (bypass RLS)
         const { data, error } = await supabase.storage
           .from('card-photos')
           .upload(filename, item.file, {
@@ -84,52 +90,60 @@ export default function StepPhotos({ state, updateState, onNext }: StepPhotosPro
           });
 
         if (error) {
+          console.error('Upload error:', error);
           throw new Error(`Upload failed: ${error.message}`);
         }
+
+        console.log('Upload success:', data);
 
         // Get public URL
         const { data: publicUrl } = supabase.storage
           .from('card-photos')
           .getPublicUrl(filename);
 
+        console.log('Public URL:', publicUrl.publicUrl);
         uploadedUrls.push(publicUrl.publicUrl);
       }
 
+      console.log('All photos uploaded:', uploadedUrls);
+
       // Update wizard state with uploaded URLs
       updateState({ photos: uploadedUrls });
+      setPreviews([]);
       setIsUploading(false);
-      onNext();
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      setUploadError(message);
+    } catch (err) {
+      const error = err instanceof Error ? err.message : 'Unknown error';
+      console.error('Upload error:', error);
+      setUploadError(error);
       setIsUploading(false);
     }
   };
 
-  const canContinue = previews.length > 0 && state.photos.length === 0;
-
   return (
     <div className="space-y-6">
-      {/* Upload Zone */}
+      <div>
+        <h2 className="text-2xl font-bold mb-2">Card Photos</h2>
+        <p className="text-muted-foreground">Upload at least one photo. Drag & drop or click to select.</p>
+      </div>
+
+      {/* Upload Area */}
       <div
         onDragEnter={handleDrag}
         onDragLeave={handleDrag}
         onDragOver={handleDrag}
         onDrop={handleDrop}
         className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-          dragActive ? 'border-red-600 bg-red-50' : 'border-muted hover:border-muted-foreground'
+          dragActive ? 'border-primary bg-primary/10' : 'border-border'
         }`}
       >
-        <Upload className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
-        <p className="font-medium mb-1">Drag photos here or click to upload</p>
-        <p className="text-sm text-muted-foreground mb-4">Front photo required, back photo optional</p>
+        <Upload className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+        <p className="text-sm font-medium mb-2">Drag photos here or click to browse</p>
+        <p className="text-xs text-muted-foreground mb-4">JPG, PNG up to 10MB each</p>
         <Button
+          type="button"
           variant="outline"
           onClick={() => fileInputRef.current?.click()}
-          className="gap-2"
-          disabled={isUploading}
         >
-          <Upload className="w-4 h-4" />
           Select Photos
         </Button>
         <input
@@ -137,75 +151,79 @@ export default function StepPhotos({ state, updateState, onNext }: StepPhotosPro
           type="file"
           multiple
           accept="image/*"
-          onChange={(e) => e.target.files && handleFiles(e.target.files)}
           className="hidden"
+          onChange={(e) => e.target.files && handleFiles(e.target.files)}
         />
       </div>
+
+      {/* Error Message */}
+      {uploadError && (
+        <div className="bg-destructive/20 border border-destructive rounded-lg p-4 flex gap-3">
+          <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
+          <p className="text-sm text-destructive">{uploadError}</p>
+        </div>
+      )}
 
       {/* Preview Grid */}
       {previews.length > 0 && (
         <div>
-          <p className="text-sm font-medium mb-3">Selected Photos ({previews.length})</p>
-          <div className="grid grid-cols-2 gap-4">
+          <p className="text-sm font-medium mb-3">Selected: {previews.length} photo(s)</p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
             {previews.map((item, idx) => (
-              <div key={idx} className="relative group">
+              <div key={idx} className="relative aspect-square">
                 <img
                   src={item.preview}
-                  alt="preview"
-                  className="w-full h-48 object-cover rounded-lg border"
+                  alt={`Preview ${idx + 1}`}
+                  className="w-full h-full object-cover rounded-lg border border-border"
                 />
                 <button
                   onClick={() => removePreview(idx)}
-                  disabled={isUploading}
-                  className="absolute top-2 right-2 p-1.5 bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50"
+                  className="absolute top-2 right-2 bg-destructive rounded-full p-1 text-white hover:bg-destructive/90"
                 >
-                  <X className="w-4 h-4" />
+                  <X className="h-4 w-4" />
                 </button>
-                <p className="text-xs text-muted-foreground mt-1 truncate">{item.file.name}</p>
               </div>
             ))}
           </div>
         </div>
       )}
 
-      {/* Upload Error */}
-      {uploadError && (
-        <div className="p-4 rounded-lg bg-red-50 border border-red-200 flex gap-3">
-          <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-          <div>
-            <p className="font-medium text-red-900">Upload Error</p>
-            <p className="text-sm text-red-700 mt-1">{uploadError}</p>
-          </div>
-        </div>
-      )}
-
-      {/* Notes */}
-      <div className="p-3 rounded-lg bg-blue-50 border border-blue-200 text-sm text-blue-900">
-        <p className="font-medium mb-1">Photo Tips</p>
-        <ul className="space-y-1 text-xs list-disc list-inside">
-          <li>Front photo is required</li>
-          <li>Back photo is optional but recommended</li>
-          <li>Use good lighting for best results</li>
-          <li>Include the whole card in frame</li>
-        </ul>
-      </div>
-
-      <div className="flex justify-end">
+      {/* Action Buttons */}
+      <div className="flex gap-3">
+        {previews.length > 0 && (
+          <Button
+            onClick={uploadPhotos}
+            disabled={isUploading}
+            className="flex-1"
+          >
+            {isUploading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                Uploading...
+              </>
+            ) : (
+              <>
+                <Upload className="h-4 w-4 mr-2" />
+                Upload {previews.length} Photo{previews.length !== 1 ? 's' : ''}
+              </>
+            )}
+          </Button>
+        )}
         <Button
-          onClick={uploadPhotos}
-          disabled={!canContinue || isUploading}
-          className="bg-red-600 hover:bg-red-700 gap-2"
+          onClick={onNext}
+          disabled={state.photos.length === 0 || isUploading}
+          variant={state.photos.length > 0 ? 'default' : 'outline'}
+          className="flex-1"
         >
-          {isUploading ? (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin" />
-              Uploading...
-            </>
-          ) : (
-            <>Continue to Search</>
-          )}
+          Continue
         </Button>
       </div>
+
+      {state.photos.length > 0 && (
+        <p className="text-sm text-success flex items-center gap-2">
+          ✓ {state.photos.length} photo(s) uploaded
+        </p>
+      )}
     </div>
   );
 }
