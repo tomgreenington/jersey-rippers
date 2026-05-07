@@ -16,13 +16,14 @@ import {
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet'
 import { cn } from '@/lib/utils'
-import { createClient } from '@supabase/supabase-js'
+import { createClient } from '@/lib/supabase/client'
+import { BRAND } from '@/lib/brand'
 
 const sidebarItems = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard, exact: true },
   { href: '/admin/inventory', label: 'Inventory', icon: Package, exact: false },
   { href: '/admin/orders', label: 'Orders', icon: ShoppingCart, exact: false },
-  { href: '/admin/spin', label: 'Spin Pool', icon: Dices, exact: false },
+  { href: '/admin/spin', label: 'Random Pool', icon: Dices, exact: false },
   { href: '/admin/audit-log', label: 'Audit Log', icon: ScrollText, exact: false },
 ]
 
@@ -72,10 +73,7 @@ function SidebarFooter() {
   const [email, setEmail] = useState<string>('')
 
   useEffect(() => {
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
+    const supabase = createClient()
 
     const getUser = async () => {
       const { data: { session } } = await supabase.auth.getSession()
@@ -88,10 +86,7 @@ function SidebarFooter() {
   }, [])
 
   const handleLogout = async () => {
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
+    const supabase = createClient()
     await supabase.auth.signOut()
     router.push('/admin/login')
   }
@@ -123,7 +118,7 @@ export function AdminSidebar() {
         <div className="flex h-full flex-col px-4 py-6">
           <Link href="/admin" className="mb-8 px-3">
             <span className="text-lg font-black tracking-tight text-primary">
-              BUCKS BREAKS
+              {BRAND.navTitle}
             </span>
           </Link>
           <NavItems />
@@ -135,7 +130,7 @@ export function AdminSidebar() {
       <div className="flex items-center justify-between border-b border-border bg-card px-4 py-3 lg:hidden">
         <Link href="/admin">
           <span className="text-lg font-black tracking-tight text-primary">
-            BUCKS BREAKS
+            {BRAND.navTitle}
           </span>
         </Link>
         <Sheet>
@@ -148,7 +143,7 @@ export function AdminSidebar() {
           <SheetContent side="left" className="w-60 p-0">
             <div className="flex h-full flex-col px-4 py-6">
               <SheetTitle className="mb-8 px-3 text-lg font-black tracking-tight text-primary">
-                BUCKS BREAKS
+                {BRAND.navTitle}
               </SheetTitle>
               <NavItems />
               <SidebarFooter />

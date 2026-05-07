@@ -25,6 +25,200 @@ Each entry should follow this structure:
 
 <!-- Add new entries below this line, newest first -->
 
+## 2026-05-07 - Logo Variants And Stripe Embedded Version
+
+**Session Summary**
+- Completed: Added the supplied textured logo asset, generated an Americana transparent logo variant, wired the homepage hero to reveal the Americana variant with a mouse spotlight, pinned Stripe checkout requests to the embedded Checkout API version, and removed the first-admin setup link from the admin login page after setup.
+- Stopped at: Code builds and lints. Stripe webhook setup and real embedded payment verification still need external Stripe/Vercel setup.
+- Next session should: Add the real Stripe webhook secret, configure the endpoint, and run one embedded cart payment plus one embedded mystery payment.
+
+**Changes**
+- `public/buck-baums-breaks-logo-textured.png`: Added the supplied dark/backdrop logo.
+- `public/buck-baums-breaks-logo-americana.png`: Added a transparent red/white/blue stars-and-stripes logo variant.
+- `src/components/store/logo-spotlight.tsx` and `src/app/globals.css`: Added a mouse-positioned reveal/invert spotlight for the homepage logo.
+- `src/app/(store)/page.tsx`: Uses the textured logo in the hero and reveals the Americana variant on hover.
+- `src/lib/supabase/cart-checkout-actions.ts` and `src/lib/supabase/random-card-actions.ts`: Send `Stripe-Version: 2026-03-25.dahlia` with Stripe REST requests so `ui_mode=embedded_page` is accepted.
+- `src/app/(admin-auth)/admin/login/page.tsx`: Removed the public first-admin setup link now that the first admin exists; additional admins should be added by an existing admin.
+
+**Verification**
+- `npm audit --omit=dev` reports `found 0 vulnerabilities`.
+- `npm run lint` passes with existing warnings only.
+- `npm run build` passes.
+
+## 2026-05-06 - Webhook Readiness Status Alignment
+
+**Session Summary**
+- Completed: Loaded the new sell-ASAP context, confirmed the launch blocker is still external Stripe webhook setup/testing, and tightened the admin readiness signal for webhook configuration.
+- Stopped at: Stripe CLI and Vercel CLI are not installed locally, and the local webhook secret remains placeholder/unconfigured.
+- Next session should: Configure the Stripe test webhook endpoint or install/use Stripe CLI, set a real `STRIPE_WEBHOOK_SECRET`, then run embedded standard-cart and mystery-card test payments.
+
+**Changes**
+- `src/lib/supabase/admin-actions.ts`: Treat `STRIPE_WEBHOOK_SECRET=whsec_...` as not configured in admin system readiness, matching the webhook verifier and launch handoff.
+- `changelog.md`: Recorded this context-loading and readiness-status alignment pass.
+
+**Verification**
+- `npm run lint` passes with existing warnings only.
+- `npm run build` passes.
+
+## 2026-05-06 - Sell ASAP Fresh Handoff
+
+**Session Summary**
+- Completed: Added a concise fresh-context launch handoff for finishing webhook setup and payment verification.
+- Stopped at: Remaining work still requires Stripe/Vercel access or Stripe CLI setup outside the current workspace.
+- Next session should: Start with `SELL_CARDS_ASAP_HANDOFF.md`, configure a real Stripe webhook endpoint/signing secret, then verify embedded standard and mystery checkout.
+
+**Changes**
+- `SELL_CARDS_ASAP_HANDOFF.md`: New immediate handoff with current truth, blockers, webhook setup options, payment verification checklist, DB checks, high-signal files, and launch non-negotiables.
+- `agent-start-session.md`: Added the new handoff to the required reading order.
+- `RIP_TO_SHIP_HANDOFF.md`: Added the new handoff to the zero-context reading order and current state.
+
+**Decisions**
+- Preserve the larger `RIP_TO_SHIP_HANDOFF.md` for complete project context and use `SELL_CARDS_ASAP_HANDOFF.md` as the fast launch checklist.
+
+**Notes**
+- Cards can be added/listed now. Checkout should wait for webhook setup and real embedded payment verification.
+
+## 2026-05-06 - Embedded Checkout On-Site
+
+**Session Summary**
+- Completed: Replaced hosted Stripe Checkout redirects with on-site Stripe embedded Checkout for both standard cart and `$5` mystery purchases.
+- Stopped at: Embedded checkout builds, lints, and production audit is clean. Real browser/payment verification still needs a usable browser automation path or manual test, plus Stripe webhook endpoint/secret setup.
+- Next session should: Configure the Stripe webhook endpoint/signing secret, then run a real embedded standard-cart test payment and embedded mystery-card test payment.
+
+**Changes**
+- `src/lib/supabase/cart-checkout-actions.ts`: Creates Checkout Sessions with `ui_mode=embedded_page` and `redirect_on_completion=never`, returning `clientSecret` and `sessionId` instead of a hosted Checkout URL.
+- `src/lib/supabase/random-card-actions.ts`: Uses the same embedded Checkout session pattern for mystery-card purchases.
+- `src/components/store/embedded-checkout-panel.tsx`: Added shared Stripe embedded Checkout renderer with completion routing back to the existing confirmation/reveal pages.
+- `src/app/(store)/cart/page.tsx`: Replaced redirect checkout button with an on-page secure checkout panel and disables cart edits once a session is open.
+- `src/components/store/random-card-purchase-form.tsx`: Renders embedded Checkout in the mystery purchase panel instead of sending the customer to Stripe.
+- `package.json` and `package-lock.json`: Added `@stripe/stripe-js` and `@stripe/react-stripe-js`.
+- `current-phase.md`, `roadmap-phases.md`, and `RIP_TO_SHIP_HANDOFF.md`: Updated current truth to include embedded checkout.
+
+**Decisions**
+- Use Stripe embedded Checkout rather than fully custom Payment Element for V1 because it keeps PCI-sensitive payment UI inside Stripe while removing the hosted-page redirect.
+- Use `redirect_on_completion=never` so redirect-based payment methods are disabled and card-style payments complete in the same browser window.
+- Keep webhook-first launch criteria because Stripe docs warn that landing-page/browser completion is not reliable enough for fulfillment.
+
+**Verification**
+- `npm audit --omit=dev` reports `found 0 vulnerabilities`.
+- `npm run lint` passes with the same existing warnings in `src/components/admin/intake-form.tsx` and `src/lib/psa-comps.ts`.
+- `npm run build` passes.
+- Local browser verification was blocked because the `agent-browser` CLI was unavailable in this workspace; HTTP smoke attempts could not connect to the dev server despite `next dev` reporting ready.
+
+## 2026-05-06 - Checkout Idempotency + Expired Cleanup
+
+**Session Summary**
+- Completed: Moved the launch path forward by adding Stripe checkout idempotency guards, applying them live, cleaning the stale expired pending order, tightening webhook secret validation, and clearing the production dependency audit.
+- Stopped at: Code and live DB are ready for webhook endpoint setup, but Stripe still needs a configured test webhook endpoint and a real `STRIPE_WEBHOOK_SECRET`.
+- Next session should: Configure the Stripe test webhook endpoint for `/api/webhooks/stripe`, set the real endpoint signing secret in local/deployed env, then verify `checkout.session.completed` and `checkout.session.expired`.
+
+**Changes**
+- `supabase/migrations/20260506_add_checkout_idempotency_guards.sql`: Added a partial unique index for non-null `orders.stripe_checkout_session_id` and a lookup index for `spin_events.stripe_checkout_session_id`.
+- Live Supabase: Applied both checkout idempotency indexes after confirming no duplicate Stripe sessions existed.
+- `src/lib/supabase/cart-checkout-actions.ts`: Expired cart reservation cleanup now cancels related pending non-spin cart orders and releases their items instead of only releasing inventory.
+- `src/lib/supabase/random-card-actions.ts`: Random-card finalization now reselects an existing order after duplicate Stripe-session conflicts, and webhook signature verification rejects placeholder secrets plus stale timestamps.
+- Live Supabase: Confirmed pending order `BBB-ORD-20260430-E2C54623` was tied to an expired/unpaid Stripe session and cancelled it.
+- `package.json` and `package-lock.json`: Updated Next and `eslint-config-next` to `16.2.5`, refreshed transitive dependencies with `npm audit fix --omit=dev`, and added an override for Next's nested PostCSS to `8.5.10`.
+- `current-phase.md`, `roadmap-phases.md`, and `RIP_TO_SHIP_HANDOFF.md`: Updated current truth and next steps.
+
+**Decisions**
+- Checkout session uniqueness is enforced at the database level before mystery checkout testing.
+- Expired order cleanup is safe to run only after confirming the Stripe session is expired and unpaid.
+- Webhook testing must wait for a real endpoint signing secret; the local env still has a placeholder.
+
+**Verification**
+- `npm audit --omit=dev` reports `found 0 vulnerabilities`.
+- `npm run lint` passes with the same existing warnings in `src/components/admin/intake-form.tsx` and `src/lib/psa-comps.ts`.
+- `npm run build` passes.
+- Live Supabase index application succeeded.
+- Live stale pending order cleanup succeeded.
+
+## 2026-05-05 - Rip-to-Ship Truth Sync
+
+**Session Summary**
+- Completed: Synced the active Rip-to-Ship docs to the latest audit truth so future sessions do not repeat stale migration work.
+- Stopped at: Docs now point next to Stripe webhook setup, expired checkout cleanup, mystery checkout idempotency/testing, dependency remediation, admin/staff behavior, and final smoke verification.
+- Next session should: Configure a Stripe test webhook endpoint for `/api/webhooks/stripe`, verify `checkout.session.completed` and `checkout.session.expired`, then replay both events to prove idempotency and pending-order cancellation.
+
+**Changes**
+- `current-phase.md`: Marked the fulfillment migration and public `card-photos` bucket as live, recorded the standard-cart paid success-page fallback verification, kept webhook/mystery incomplete, and documented the stale expired-session pending order.
+- `roadmap-phases.md`: Added the 2026-05-05 audit snapshot, removed stale "apply migration" next steps, and reordered launch gaps around webhook-first verification, expired cleanup, mystery hardening, and dependency audit remediation.
+- `RIP_TO_SHIP_HANDOFF.md`: Updated the zero-context handoff, verification order, implementation order, and gotchas to match the current audit.
+
+**Decisions**
+- Standard cart checkout is only partially verified until signed Stripe webhooks complete orders without browser success-page fallback.
+- Mystery checkout remains unproven until a real test-mode purchase creates `spin_events`, order items, sold inventory, and fulfillment tasks.
+- The stale pending order should only be cleaned after confirming its Stripe Checkout Session is expired and unpaid.
+
+**Notes**
+- `npm run lint` and `npm run build` are recorded as passing from the audit.
+- `npm audit --omit=dev` found production dependency issues that remain for the dependency/security phase.
+
+## 2026-05-01 - Rip-to-Ship Fulfillment + Orders Implementation
+
+**Session Summary**
+- Completed: Implemented the Rip-to-Ship foundation slice from the handoff: fulfillment tasks, checkout task creation, customer orders, admin orders, fulfillment shipping, export, random-pool management, and live dashboard metrics.
+- Stopped at: Code builds and lints. Superseded by the 2026-05-05 audit: the fulfillment migration is now applied live; real webhook verification, mystery checkout verification, expired cleanup, mobile QA, and acceptance tests still remain.
+- Next session should: Follow the 2026-05-05 truth sync: configure Stripe webhooks first, then handle expired cleanup and mystery checkout hardening/testing.
+
+**Changes**
+- `supabase/migrations/20260501_add_fulfillment_tasks.sql`: Added persistent fulfillment task table, indexes, updated-at trigger, and RLS policies.
+- `src/lib/supabase/order-fulfillment-actions.ts`: Added server-side order reads, fulfillment task creation, mark-shipped action, live dashboard metrics, spin-pool controls, and shipping CSV export.
+- `src/lib/supabase/cart-checkout-actions.ts` and `src/lib/supabase/random-card-actions.ts`: Create fulfillment tasks idempotently after paid finalization and on replayed completed sessions.
+- Store order pages: Replaced `/orders` and `/orders/[id]` placeholders with authenticated order history/detail views and linked confirmation/reveal pages to order details.
+- Admin pages: Replaced order/export/spin placeholders and mock dashboard metrics with live operational pages.
+- `src/lib/supabase/admin-auth.ts` and admin layout: Allow staff-role operational admin access while existing admin-only actions remain guarded.
+
+**Decisions**
+- Fulfillment tasks are one-per-order-item with `unique(order_item_id)` and ownership seeded from `inventory_items.created_by`.
+- Mark-shipped is manual for V1 and writes tracking, task status, order status, inventory status, and audit entries.
+- Shipping labels remain out of scope for this pass; CSV export is the V1 operational bridge.
+
+**Verification**
+- `npm run lint` passes with existing older warnings only.
+- `npm run build` passes.
+- Local dev server started at `http://localhost:3000`; smoke checks returned `/` 200, `/orders` 200, `/spin` 200, and `/admin` 307 to login.
+
+## 2026-05-01 - Handoff Alignment Applied To Roadmap Docs
+
+**Session Summary**
+- Completed: Synced the active roadmap/session docs with `RIP_TO_SHIP_HANDOFF.md` so future agents follow the same Rip-to-Ship implementation order.
+- Stopped at: Docs now point to fulfillment data model first, then idempotent task creation, server-side order/fulfillment actions, customer/admin pages, dashboard metrics, export, UX polish, and verification.
+- Next session should: Superseded by the 2026-05-05 truth sync. The fulfillment migration is now applied live; continue with webhook setup and verification.
+
+**Changes**
+- `current-phase.md`: Reordered recommended implementation steps to match the handoff and added real-catalog launch verification language.
+- `roadmap-phases.md`: Expanded the fulfillment task model, idempotency, mark-shipped, browser smoke, Stripe verification, and mock-catalog notes from the handoff.
+- `agent-start-session.md`: Replaced the stale end-session pointer with current doc update expectations and added a handoff-alignment checklist item.
+
+**Decisions**
+- `RIP_TO_SHIP_HANDOFF.md` remains the source of truth when roadmap/session docs drift.
+- Launch verification must use real Supabase catalog data, not mock catalog fallback.
+
+**Notes**
+- No application code changed in this documentation pass.
+
+## 2026-05-01 - Rip-to-Ship Roadmap + Zero-Context Handoff
+
+**Session Summary**
+- Completed: Audited roadmap docs against the actual repo state and documented the real current phase as Rip-to-Ship V1 Foundation.
+- Stopped at: Documentation handoff is ready. Implementation work remains for customer orders, admin orders, fulfillment, shipping, checkout polish, and Stripe test verification.
+- Next session should: Start with `RIP_TO_SHIP_HANDOFF.md`, then implement the fulfillment data model and real customer/admin order pages.
+
+**Changes**
+- `current-phase.md`: Replaced stale Phase 2 wording with the current Phase 2.7 reality audit, non-negotiables, scope, implementation order, and success criteria.
+- `roadmap-phases.md`: Rewrote the roadmap around Rip-to-Ship V1: checkout, customer accounts, admin orders, fulfillment, mobile polish, and launch hardening.
+- `RIP_TO_SHIP_HANDOFF.md`: Added a complete zero-context passoff prompt, execution process, file map, gotchas, and acceptance checklist.
+- `agent-start-session.md`: Added `roadmap-phases.md` and `RIP_TO_SHIP_HANDOFF.md` to the required context load.
+
+**Decisions**
+- Roadmap name: Rip-to-Ship V1.
+- Current state label: Phase 2.7, because checkout/spin code exists but accounts, admin orders, fulfillment, shipping, and verification are not launch-ready.
+- Reserved-card hiding remains a hard requirement. Public catalog and mystery previews should only show currently listed inventory.
+
+**Notes**
+- Older session summaries are useful history but may be stale. Prefer `current-phase.md`, `roadmap-phases.md`, and `RIP_TO_SHIP_HANDOFF.md` for current direction.
+
 ## 2026-03-28 Session 6 - Automated Bucket Creation + Ready to Ship
 
 **Session Summary**
@@ -266,20 +460,20 @@ Each entry should follow this structure:
 - Next session should: Start Phase 1 — `npx create-next-app`, configure Tailwind + shadcn/ui, build app shell
 
 **Changes**
-- design-direction.md: Created — "Supreme x TCGPlayer x PSA" aesthetic. Dark mode default, Jersey Red (#DC2626) primary, Collector Blue (#2563EB) secondary, Inter font. Component style guide for cards, buttons, nav, badges, search, spin page, admin dashboard.
-- technical-spec.md: Created — 6 database tables with full column definitions, RLS policy matrix per table/role, 20+ server actions, 3 API route handlers, 16 store routes + 9 admin routes, SKU format (JR-TYPE-YYYYMMDD-SEQ), image storage rules, 2 cron jobs, Typesense schema, rate limiting per endpoint, 6 email templates via Resend, testing strategy (Vitest + Playwright)
+- design-direction.md: Created — "Supreme x TCGPlayer x PSA" aesthetic. Dark mode default, Buck Red (#DC2626) primary, Collector Blue (#2563EB) secondary, Inter font. Component style guide for cards, buttons, nav, badges, search, spin page, admin dashboard.
+- technical-spec.md: Created — 6 database tables with full column definitions, RLS policy matrix per table/role, 20+ server actions, 3 API route handlers, 16 store routes + 9 admin routes, SKU format (BBB-TYPE-YYYYMMDD-SEQ), image storage rules, 2 cron jobs, Typesense schema, rate limiting per endpoint, 6 email templates via Resend, testing strategy (Vitest + Playwright)
 - AGENT-INSTRUCTIONS.md: Added design-direction.md and technical-spec.md to file reference table
 - current-phase.md: Resolved open questions (npm, brand colors)
 
 **Decisions**
 - npm as package manager
 - Design direction: dark mode default, premium streetwear aesthetic
-- Jersey Red (#DC2626) primary, Collector Blue (#2563EB) secondary
+- Buck Red (#DC2626) primary, Collector Blue (#2563EB) secondary
 - Inter font family (headings + body)
 - Resend for transactional email
 - Upstash Redis for rate limiting
 - Vitest + Playwright for testing
-- SKU format: JR-{TYPE}-{YYYYMMDD}-{SEQ}
+- SKU format: BBB-{TYPE}-{YYYYMMDD}-{SEQ}
 - Prices stored as integers in cents
 
 **Notes**
@@ -302,7 +496,7 @@ Each entry should follow this structure:
 - roadmap-phases.md: Defined 8 phases — UI-first approach (Phases 1-4 mock data, Phases 5-8 backend integration)
 - current-phase.md: Defined Phase 1 (Project Scaffolding + UI Foundation) with scope, deliverables, success criteria
 - changelog.md: Initial entry (this one)
-- AGENT-INSTRUCTIONS.md: Updated with Jersey Rippers project context
+- AGENT-INSTRUCTIONS.md: Updated with Buck & Baums Breaks project context
 
 **Decisions**
 - Tech stack: Next.js + Supabase + Stripe + Typesense + Claude Vision + Tailwind/shadcn + Vercel

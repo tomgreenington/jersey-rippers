@@ -66,7 +66,7 @@ One order per checkout session.
 | Column | Type | Constraints | Notes |
 |--------|------|------------|-------|
 | id | uuid | PK, DEFAULT gen_random_uuid() | |
-| order_number | text | UNIQUE, NOT NULL | Human-readable (e.g., JR-20260301-0001) |
+| order_number | text | UNIQUE, NOT NULL | Human-readable (e.g., BBB-20260301-0001) |
 | customer_id | uuid | NOT NULL, FK → profiles(id) | |
 | status | text | NOT NULL, CHECK (pending/paid/shipped/refunded/partially_refunded/cancelled) | Default: `pending` |
 | total_cents | integer | NOT NULL | Total in cents |
@@ -141,10 +141,10 @@ Log of every spin attempt and outcome.
 | stripe_checkout_session_id | text | | |
 | status | text | NOT NULL, CHECK (pending/completed/expired) | |
 | nonce | text | | Random nonce for audit (not exposed to client) |
-| created_at | timestamptz | NOT NULL, DEFAULT now() | Used for 24h cooldown check |
+| created_at | timestamptz | NOT NULL, DEFAULT now() | Used for audit and purchase history |
 
 **Indexes:**
-- `idx_spin_user_created` on (user_id, created_at DESC) — for 24h cooldown lookups
+- `idx_spin_user_created` on (user_id, created_at DESC) — for customer purchase history lookups
 
 ### Entity Relationship Summary
 
@@ -276,7 +276,7 @@ These are Next.js Server Actions called from the frontend. All run server-side.
 | Action | Auth | Purpose |
 |--------|------|---------|
 | `createCheckoutSession(items[])` | Customer | Validate items, reserve inventory (atomic), create Stripe Checkout Session, return URL |
-| `createSpinCheckoutSession()` | Customer | Check 24h eligibility, select random item (crypto RNG), reserve, create $5 Stripe session |
+| `createRandomCardCheckoutSession(quantity)` | Customer | Select random items with server-side crypto RNG, reserve, create $5/card Stripe session |
 
 #### Inventory (Admin/Staff)
 | Action | Auth | Purpose |
@@ -316,7 +316,7 @@ These are Next.js Server Actions called from the frontend. All run server-side.
 
 ## 5. SKU Generation
 
-**Format:** `JR-{TYPE}-{YYYYMMDD}-{SEQ}`
+**Format:** `BBB-{TYPE}-{YYYYMMDD}-{SEQ}`
 
 | Segment | Values | Example |
 |---------|--------|---------|
@@ -325,7 +325,7 @@ These are Next.js Server Actions called from the frontend. All run server-side.
 | `YYYYMMDD` | Date of creation | `20260301` |
 | `SEQ` | 4-digit zero-padded daily sequence | `0001` |
 
-**Example:** `JR-SGL-20260301-0042` — the 42nd single created on March 1, 2026.
+**Example:** `BBB-SGL-20260301-0042` — the 42nd single created on March 1, 2026.
 
 **Implementation:** Use a database sequence or counter table per day. Atomic increment on creation.
 
@@ -395,7 +395,7 @@ Implemented via **Vercel Cron Jobs** (`vercel.json` config).
 |----------|-------|--------|-------|
 | `/api/webhooks/stripe` | No limit | — | Stripe manages its own retry logic |
 | `createCheckoutSession` | 10 requests | 1 minute | Per user |
-| `createSpinCheckoutSession` | 3 requests | 1 minute | Per user (extra protection beyond 24h rule) |
+| `createRandomCardCheckoutSession` | 10 requests | 1 minute | Per user; prevents checkout-session spam while allowing repeat purchases |
 | `processAIIntake` | 10 requests | 1 minute | Per user |
 | `signIn` | 5 requests | 1 minute | Per IP |
 | `signUp` | 3 requests | 1 minute | Per IP |
@@ -464,8 +464,8 @@ tests/
 ### MVP Acceptance Test Cases (from spec Section 13)
 1. **Race condition:** Two users buy same single → only one succeeds, other gets "unavailable"
 2. **Webhook idempotency:** Replay `checkout.session.completed` → no duplicate orders
-3. **Spin cooldown:** Second spin within 24h → rejected server-side
-4. **Spin tamper-proof:** Client cannot influence which card is selected
+3. **Random-card repeat purchase:** Customer can buy multiple random cards in one checkout and start another checkout later
+4. **Random-card tamper-proof:** Client can only choose quantity; client cannot influence which card is selected
 5. **Role enforcement:** Non-admin/staff → blocked from admin pages
 6. **Order isolation:** Customer A cannot see Customer B's orders
 7. **Search accuracy:** Fuzzy search returns correct matches, facets filter correctly

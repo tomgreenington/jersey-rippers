@@ -2,15 +2,15 @@
 
 ## Mission
 
-Jersey Rippers is a direct-to-consumer collectible card storefront with integrated internal inventory/order operations. It solves the problem of managing high-volume 1-of-1 card inventory while providing customers a fast, professional shopping experience with a daily engagement hook (the $5 Spin).
+Buck & Baums Breaks is a direct-to-consumer collectible card storefront with integrated internal inventory/order operations. It solves the problem of managing high-volume 1-of-1 card inventory while providing customers a fast, professional shopping experience with unlimited $5 random-card purchases.
 
 ## Primary Outcome
 
-A production-ready MVP storefront where customers can browse, search, and purchase collectible cards (raw singles, graded slabs, sealed product) with Stripe payments, while the internal team manages inventory intake, order fulfillment, and a curated daily spin pool — all with zero oversells and full audit traceability.
+A production-ready MVP storefront where customers can browse, search, and purchase collectible cards (raw singles, graded slabs, sealed product) with Stripe payments, while the internal team manages inventory intake, order fulfillment, and a curated random-card pool — all with zero oversells and full audit traceability.
 
 ## System Intent
 
-The system is a secure e-commerce backbone for a card business that owns all inventory. It handles the full lifecycle: card intake (with AI-assisted metadata detection) → listing → customer discovery via fast fuzzy search → atomic inventory reservation → Stripe payment → order fulfillment. A daily $5 "Spin" mechanic lets customers purchase a random card from a curated pool for engagement and retention.
+The system is a secure e-commerce backbone for a card business that owns all inventory. It handles the full lifecycle: card intake (with AI-assisted metadata detection) → listing → customer discovery via fast fuzzy search → atomic inventory reservation → Stripe payment → order fulfillment. An unlimited $5 random-card mechanic lets customers purchase one or more server-selected cards from a curated pool.
 
 ## Non-Negotiables
 
@@ -24,7 +24,7 @@ The system is a secure e-commerce backbone for a card business that owns all inv
 ## Key User Flows
 
 1. **Browse & Buy** — Customer browses collections (Singles, Graded, Sealed, New Drops), searches with fuzzy matching + facet filters, adds to cart, checks out via Stripe, receives confirmation.
-2. **Daily Spin** — Customer purchases a $5 spin (1 per 24h), system randomly assigns a card from curated pool server-side, payment processes via Stripe, card is revealed on confirmation.
+2. **$5 Random Cards** — Customer chooses a quantity, system reserves server-selected random cards from the curated pool, payment processes via Stripe, cards are revealed after payment confirmation.
 3. **Inventory Intake** — Staff uploads card photo, AI suggests metadata, staff reviews/edits/sets condition/price, confirms listing. Draft → listed.
 4. **Order Fulfillment** — Admin views orders dashboard, exports shipping CSV, marks orders shipped with optional tracking, handles refunds when needed.
 5. **Inventory Management** — Admin/staff edits items, moves locations, manages spin pool, publishes/unpublishes, views audit history.
@@ -86,7 +86,7 @@ The system is a secure e-commerce backbone for a card business that owns all inv
 | Single | A raw (ungraded) collectible card. Always qty=1, unique inventory item. |
 | Slab | A graded card encased by a grading company (PSA, BGS, CGC, etc.). Always qty=1. |
 | Sealed | Factory-sealed product (packs, boxes, cases). Can have qty > 1. |
-| Spin | A $5 daily purchase where the system randomly assigns a card from a curated pool. |
+| Random Card Purchase | A $5-per-card purchase where the system randomly assigns cards from a curated pool. |
 | Spin Pool | A curated set of inventory items tagged `spin_pool=true` eligible for random assignment. |
 | Reservation | A temporary hold on a 1-of-1 item during checkout (10-15 min TTL). Prevents oversells. |
 | Intake | The process of adding a new inventory item: photo upload → AI detection → human review → listing. |

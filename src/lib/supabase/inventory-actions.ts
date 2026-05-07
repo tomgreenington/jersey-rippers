@@ -7,6 +7,7 @@
 
 import Anthropic from '@anthropic-ai/sdk';
 import { getServiceRoleClient } from './server';
+import { getCurrentAdminUser } from './admin-auth';
 
 interface AICardSuggestions {
   player?: string;
@@ -23,6 +24,18 @@ interface AICardSuggestions {
   notes?: string;
 }
 
+async function requireCurrentAdmin(
+  requestedUserId: string
+): Promise<{ success: true; userId: string } | { success: false; error: string }> {
+  const { user, isAdmin } = await getCurrentAdminUser();
+
+  if (!user || !isAdmin || user.id !== requestedUserId) {
+    return { success: false, error: 'Unauthorized' };
+  }
+
+  return { success: true, userId: user.id };
+}
+
 /**
  * Analyze a card photo with Claude Vision
  * Returns structured suggestions for card metadata
@@ -30,6 +43,11 @@ interface AICardSuggestions {
 export async function analyzeCardPhoto(
   imageUrl: string
 ): Promise<{ success: boolean; data?: AICardSuggestions; error?: string }> {
+  const { isAdmin } = await getCurrentAdminUser();
+  if (!isAdmin) {
+    return { success: false, error: 'Unauthorized' };
+  }
+
   if (!process.env.ANTHROPIC_API_KEY) {
     return { success: false, error: 'Anthropic API key not configured' };
   }
@@ -96,7 +114,7 @@ IMPORTANT:
 
 /**
  * Generate SKU for a new inventory item
- * Format: JR-{TYPE}-{YYYYMMDD}-{SEQ}
+ * Format: BBB-{TYPE}-{YYYYMMDD}-{SEQ}
  */
 async function generateSKU(type: 'single' | 'slab' | 'sealed'): Promise<string> {
   const supabase = getServiceRoleClient();
@@ -106,15 +124,16 @@ async function generateSKU(type: 'single' | 'slab' | 'sealed'): Promise<string> 
 
   // Get today's date
   const now = new Date();
-  const dateStr = now.toISOString().split('T')[0].replace(/-/g, '');
+  const isoDate = now.toISOString().split('T')[0];
+  const dateStr = isoDate.replace(/-/g, '');
 
   // Get count of items created today with this type
   const { count, error } = await supabase
     .from('inventory_items')
     .select('id', { count: 'exact', head: true })
     .eq('type', type)
-    .gte('created_at', `${dateStr}T00:00:00Z`)
-    .lt('created_at', `${dateStr}T23:59:59Z`);
+    .gte('created_at', `${isoDate}T00:00:00Z`)
+    .lt('created_at', `${isoDate}T23:59:59Z`);
 
   if (error) {
     throw new Error(`Failed to generate SKU: ${error.message}`);
@@ -123,7 +142,7 @@ async function generateSKU(type: 'single' | 'slab' | 'sealed'): Promise<string> 
   // Sequence is 1-indexed, zero-padded to 4 digits
   const sequence = ((count ?? 0) + 1).toString().padStart(4, '0');
 
-  return `JR-${typeCode}-${dateStr}-${sequence}`;
+  return `BBB-${typeCode}-${dateStr}-${sequence}`;
 }
 
 /**
@@ -140,13 +159,7 @@ export async function createInventoryItem(
     card_number?: string;
     year?: number;
     player?: string;
-    team?: string;
-    sport?: string;
-    position?: string;
     rarity?: string;
-    rookie?: boolean;
-    parallel_type?: string;
-    manufacturer?: string;
     language?: string;
     edition?: string;
     condition?: string;
@@ -159,8 +172,13 @@ export async function createInventoryItem(
     spin_pool?: boolean;
   },
   userId: string
-): Promise<{ success: boolean; data?: any; error?: string }> {
+): Promise<{ success: boolean; data?: unknown; error?: string }> {
   try {
+    const admin = await requireCurrentAdmin(userId);
+    if (!admin.success) {
+      return { success: false, error: admin.error };
+    }
+
     const supabase = getServiceRoleClient();
 
     // Generate SKU
@@ -181,13 +199,7 @@ export async function createInventoryItem(
         card_number: data.card_number,
         year: data.year,
         player: data.player,
-        team: data.team,
-        sport: data.sport,
-        position: data.position,
         rarity: data.rarity,
-        rookie: data.rookie,
-        parallel_type: data.parallel_type,
-        manufacturer: data.manufacturer,
         language: data.language || 'English',
         edition: data.edition,
         condition: data.condition,
@@ -198,7 +210,7 @@ export async function createInventoryItem(
         photos: data.photos,
         storage_location: data.storage_location,
         spin_pool: data.spin_pool || false,
-        created_by: userId,
+        created_by: admin.userId,
       })
       .select()
       .single();
@@ -213,7 +225,7 @@ export async function createInventoryItem(
       entity_id: newItem.id,
       action: 'created',
       new_value: newItem,
-      performed_by: userId,
+      performed_by: admin.userId,
     });
 
     return { success: true, data: newItem };
@@ -248,8 +260,13 @@ export async function updateInventoryItem(
     storage_location: string;
   }>,
   userId: string
-): Promise<{ success: boolean; data?: any; error?: string }> {
+): Promise<{ success: boolean; data?: unknown; error?: string }> {
   try {
+    const admin = await requireCurrentAdmin(userId);
+    if (!admin.success) {
+      return { success: false, error: admin.error };
+    }
+
     const supabase = getServiceRoleClient();
 
     // Get current item for audit
@@ -268,7 +285,7 @@ export async function updateInventoryItem(
       .from('inventory_items')
       .update({
         ...updates,
-        updated_by: userId,
+        updated_by: admin.userId,
       })
       .eq('id', itemId)
       .select()
@@ -285,7 +302,7 @@ export async function updateInventoryItem(
       action: 'updated',
       old_value: currentItem,
       new_value: updatedItem,
-      performed_by: userId,
+      performed_by: admin.userId,
     });
 
     return { success: true, data: updatedItem };
@@ -303,6 +320,11 @@ export async function publishInventoryItem(
   userId: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    const admin = await requireCurrentAdmin(userId);
+    if (!admin.success) {
+      return { success: false, error: admin.error };
+    }
+
     const supabase = getServiceRoleClient();
 
     const { data: currentItem, error: fetchError } = await supabase
@@ -319,11 +341,11 @@ export async function publishInventoryItem(
       return { success: false, error: 'Only draft items can be published' };
     }
 
-    const { data: published, error } = await supabase
+    const { error } = await supabase
       .from('inventory_items')
       .update({
         status: 'listed',
-        updated_by: userId,
+        updated_by: admin.userId,
       })
       .eq('id', itemId)
       .select()
@@ -340,7 +362,7 @@ export async function publishInventoryItem(
       action: 'published',
       old_value: { status: 'draft' },
       new_value: { status: 'listed' },
-      performed_by: userId,
+      performed_by: admin.userId,
     });
 
     return { success: true };
@@ -358,6 +380,11 @@ export async function unpublishInventoryItem(
   userId: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    const admin = await requireCurrentAdmin(userId);
+    if (!admin.success) {
+      return { success: false, error: admin.error };
+    }
+
     const supabase = getServiceRoleClient();
 
     const { data: currentItem, error: fetchError } = await supabase
@@ -374,11 +401,11 @@ export async function unpublishInventoryItem(
       return { success: false, error: 'Only listed items can be unpublished' };
     }
 
-    const { data: archived, error } = await supabase
+    const { error } = await supabase
       .from('inventory_items')
       .update({
         status: 'archived',
-        updated_by: userId,
+        updated_by: admin.userId,
       })
       .eq('id', itemId)
       .select()
@@ -395,7 +422,7 @@ export async function unpublishInventoryItem(
       action: 'unpublished',
       old_value: { status: 'listed' },
       new_value: { status: 'archived' },
-      performed_by: userId,
+      performed_by: admin.userId,
     });
 
     return { success: true };

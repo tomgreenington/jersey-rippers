@@ -1,178 +1,106 @@
-# Agent End Session — Session 8 (2026-03-28)
+# Agent End Session - Rip-to-Ship Fulfillment + Orders (2026-05-01)
 
 ## Session Summary
 
-**Status:** Complete frontend redesign with Bucks Breaks branding. Light/dark mode toggle + enhanced header + redesigned spin page. Ready to build backend functions.
+**Status:** Repo-level implementation is complete for the Rip-to-Ship V1 foundation slice. Code builds and lints. Live Supabase migration, real Stripe test-mode checkout/webhook verification, mobile QA, and acceptance tests still remain before launch confidence.
 
-**What Was Done This Session:**
-1. ✅ **Color Palette Overhaul** — Switched to Bucks Breaks theme:
-   - Light mode: Cream bg, Navy text, Red (#DC2626) primary, Gold accents
-   - Dark mode: Dark Navy bg, Cream text, Bright Red (#EF4444) primary, Blue (#3B82F6) secondary, Gold accents
+## What Was Done
 
-2. ✅ **Theme Provider** — Created light/dark mode toggle with localStorage persistence
-   - Toggle button in header (Sun/Moon icons)
-   - Preference saved across sessions
+1. Added persistent fulfillment tasks.
+   - New migration: `supabase/migrations/20260501_add_fulfillment_tasks.sql`
+   - One task per paid order item with `unique(order_item_id)`.
+   - Task owner is seeded from `inventory_items.created_by` when available.
 
-3. ✅ **Typography** — Switched from Inter to **Poppins** font for premium card store aesthetic
+2. Wired checkout finalization to fulfillment.
+   - `src/lib/supabase/cart-checkout-actions.ts`
+   - `src/lib/supabase/random-card-actions.ts`
+   - Completed/replayed finalization creates fulfillment tasks idempotently.
 
-4. ✅ **Rebranded to "Bucks Breaks"** — Throughout site (header, title tags)
-   - Logo image displayed in header (responsive)
+3. Added shared server-side order/fulfillment actions.
+   - New file: `src/lib/supabase/order-fulfillment-actions.ts`
+   - Handles customer order reads, admin order reads, dashboard metrics, shipping CSV export, spin-pool controls, and mark-shipped.
 
-5. ✅ **Enhanced Header** — Mega-menu with 6 categories, prominent $5 SPIN CTA, theme toggle
+4. Replaced customer order placeholders.
+   - `/orders` now shows authenticated customer order history.
+   - `/orders/[id]` now shows authenticated order details, items, shipping, fulfillment status, and tracking.
+   - Checkout confirmation and mystery reveal pages link to the order detail page.
 
-6. ✅ **Redesigned Homepage** — 7 sections emphasizing $5 spin:
-   - Hero with gradient headline + dual CTAs
-   - Shop by Category grid (4 cards)
-   - Daily $5 Spin Banner (prominent gradient card)
-   - Featured Inventory grid
-   - What You Could Win section
-   - Why Choose Us (3 trust signals)
-   - Final CTA banner
+5. Replaced admin operational placeholders.
+   - `/admin` now uses live Supabase metrics.
+   - `/admin/orders` lists real orders with status filters.
+   - `/admin/orders/[id]` shows order/customer/payment/fulfillment detail and supports manual mark-shipped.
+   - `/admin/orders/export` provides a paid/unshipped CSV export.
+   - `/admin/spin` manages the random-card pool with live inventory.
 
-7. ✅ **Redesigned /spin Page:**
-   - Hero section with "Win Cards Worth Up to $500"
-   - "How It Works" 3-step process cards
-   - Scrolling winners ticker at bottom (auto-loops, hover to pause)
-   - Winners display name, prize won, prize amount
+6. Updated docs.
+   - `current-phase.md`
+   - `roadmap-phases.md`
+   - `RIP_TO_SHIP_HANDOFF.md`
+   - `changelog.md`
 
-8. ✅ **Product Cards Updated** — Now display actual images from inventory with smooth hover zoom
-
-9. ✅ **Real Card Photos** — Added to mock inventory (ohtani1.png, ohtani2.png, joe1.png)
-
-**Commits Made (2 commits, locally ready):**
-1. Session 8: Frontend redesign with Bucks Breaks branding & light/dark mode
-2. Update: Bucks Breaks logo in header + redesigned spin page with winners ticker
-
-**Push Status:** Local commits ready. Remote push failing due to auth issue (not critical — Vercel auto-deploys from GitHub).
-
-**Next Session Should:**
-1. **Debug push issue** OR manually trigger Vercel deploy
-2. **Build backend for $5 spin:**
-   - Stripe payment integration
-   - Spin wheel animation
-   - Random card selection + order creation
-   - Reveal page with result
-3. **Fix autofetches** (PSA comps scraping, Claude enrichment)
-4. **Finish card upload wizard** end-to-end
-
----
-
-## Wizard Architecture (Current — 4 Steps)
-
-**Step 1 — Photos** (`step-photos.tsx`)
-- Drag-and-drop / file picker
-- Client-side upload to Supabase Storage (`card-photos` bucket)
-- Returns public URLs → updateState({ photos: urls })
-
-**Step 2 — Card Info** (`step-type.tsx`) — **MANUAL ENTRY**
-- Player, Set, Card #, Year, Rarity, Sport, Position, Manufacturer
-- Type selection: single / slab / sealed
-- Conditional grading fields (for slab type only)
-
-**Step 3 — Cost** (`step-cost.tsx`)
-- Cost basis + selling price (both in cents)
-- Price input updates: { price, costBasis }
-
-**Step 4 — Review** (`step-review.tsx`)
-- Summary display + photos count
-- "Publish Now" / "Save as Draft" buttons
-- Calls `createInventoryItem()` server action
-- Saves to `inventory_items` table with userId from auth
-- Redirects to `/admin/inventory` on success
-
-**Why Simplified?**
-- User wants fast, friction-free intake (not AI auto-enrichment)
-- Manual entry is clearer (staff knows their own inventory)
-- Removes dependency on Claude API + search DB for MVP
-- Phase 3+ can add rich search, bulk import, etc.
-
----
-
-## Files & Status
-
-| File | Status | Notes |
-|------|--------|-------|
-| `src/components/admin/card-wizard/index.tsx` | ✅ | 4-step wizard, auto bucket on mount |
-| `src/components/admin/card-wizard/step-photos.tsx` | ✅ | Drag-drop upload to Storage |
-| `src/components/admin/card-wizard/step-type.tsx` | ✅ | Manual card info entry |
-| `src/components/admin/card-wizard/step-cost.tsx` | ✅ | Price input |
-| `src/components/admin/card-wizard/step-review.tsx` | ✅ | Summary + publish |
-| `src/lib/supabase/storage-actions.ts` | ✅ | Auto-creates bucket (on origin/main) |
-| `src/lib/supabase/inventory-actions.ts` | ⏳ | Verify `created_by` saved to DB |
-| Schema: `inventory_items.created_by` | ✅ | Tracks staff member who uploaded |
-
----
-
-## Known Issues & Testing Notes
-
-### Photo Upload
-- Client-side upload to public bucket using anon key
-- **Test this during partner intake** — if it fails, likely RLS policy issue
-- Workaround: Move to server action if needed
-
-### Price Format
-- Stored in cents (e.g., 1999 = $19.99)
-- Display divides by 100 for UI
-
-### Naming Convention (Future)
-- Photos currently named `card-photo-${timestamp}-${random}.jpg`
-- Spec says: `{inventory_item_id}/{index}.{ext}` (not yet implemented)
-- Can refactor later — doesn't block MVP
-
----
-
-## Deployment (Next Session)
+## Verification Run
 
 ```bash
-# Push 3 commits
-git push origin main
-
-# Deploy to Vercel (if not auto-deploying from GitHub)
-# Add env vars:
-# - NEXT_PUBLIC_SUPABASE_URL
-# - NEXT_PUBLIC_SUPABASE_ANON_KEY
-# - SUPABASE_SERVICE_ROLE_KEY
-# - ANTHROPIC_API_KEY
+npm run lint
+npm run build
 ```
 
-**Test URL:** `https://{vercel-url}/admin/inventory/new`
-- Should require signin
-- Upload photo → fill card info → set price → publish
-- Item should appear in inventory list
+Results:
+- `npm run lint` passed with existing older warnings only in `src/components/admin/intake-form.tsx` and `src/lib/psa-comps.ts`.
+- `npm run build` passed.
+- Local dev server smoke checks:
+  - `/` returned 200
+  - `/orders` returned 200
+  - `/spin` returned 200
+  - `/admin` returned 307 to login, as expected when unauthenticated
 
----
+## Known Remaining Work
 
-## What's NOT Done (Phase 3+)
+1. Apply the new migration to Supabase:
 
-- ❌ Customer storefront (browse)
-- ❌ Product detail page
-- ❌ Shopping cart
-- ❌ Stripe checkout
-- ❌ Orders + webhook
-- ❌ Email notifications
-- ❌ Admin dashboard
+```bash
+supabase/migrations/20260501_add_fulfillment_tasks.sql
+```
 
----
+2. Run real Stripe test-mode verification:
+   - Standard cart checkout.
+   - `$5` mystery checkout.
+   - Signed Stripe webhook completion.
+   - Replayed webhook idempotency.
+   - Expired/cancelled checkout reservation release.
 
-## Quick Debug Checklist
+3. Smoke-test real paid order flows:
+   - Customer `/orders` and `/orders/[id]`.
+   - Admin `/admin/orders`, `/admin/orders/[id]`, `/admin/orders/export`, and `/admin/spin`.
+   - Mark shipped and confirm task, order, inventory, audit log, and customer tracking display.
 
-**If photo upload fails:**
-1. Browser console → check error message from step-photos.tsx
-2. Supabase → Storage → card-photos bucket exists + public
-3. Check bucket RLS policies allow authenticated (or unrestricted) writes
+4. Finish launch hardening:
+   - Mobile QA.
+   - Acceptance tests for checkout, webhooks, order isolation, admin role enforcement, and fulfillment.
+   - Admin sale/fulfillment notification placeholder or Resend implementation.
 
-**If item not saved:**
-1. Check `createInventoryItem()` in inventory-actions.ts
-2. Verify userId passed from auth session
-3. Check Supabase RLS on `inventory_items` allows INSERT for staff role
+## Important Notes
 
-**If wizard doesn't navigate:**
-1. Check `onNext()` called from step component
-2. Browser console for JS errors
-3. Verify currentStep < STEPS.length
+- Do not undo reserved-card hiding. Public catalog and mystery previews should only show `status = listed`.
+- Launch verification must use real Supabase catalog data, not mock catalog fallback.
+- The repo has many unrelated existing dirty files. Do not revert unrelated work.
+- Staff-role users are now allowed into operational admin pages via the admin layout, but existing admin-only actions remain guarded by their own checks.
 
----
+## Passoff Prompt
 
-## Ready to Go!
+You are taking over the Buck & Baums Breaks repo at `/Users/adamlanel/Documents/Adam_Code_test/Jersey_Rippers`.
 
-3 commits are staged and ready. App is feature-complete for Phase 2 MVP intake. No blockers. Just push + deploy + test with partners.
+Read these first:
+
+1. `agent-start-session.md`
+2. `current-phase.md`
+3. `roadmap-phases.md`
+4. `RIP_TO_SHIP_HANDOFF.md`
+5. Latest entries in `changelog.md`
+6. `agent-end-session.md`
+
+Current state: the Rip-to-Ship V1 foundation code is implemented and verified at repo level. Fulfillment tasks, customer order pages, admin order/fulfillment pages, shipping CSV export, random-pool management, and live dashboard metrics are in the codebase. `npm run lint` and `npm run build` pass.
+
+Your first job is not to rebuild the feature. Apply `supabase/migrations/20260501_add_fulfillment_tasks.sql` to the live Supabase database, then run real Stripe test-mode standard cart and `$5` mystery purchases. Confirm orders, order items, sold inventory, spin events, fulfillment tasks, customer order history/detail, admin order detail, shipping export, and mark-shipped tracking.
+
+Keep reserved-card hiding intact. Do not revert unrelated dirty worktree changes.

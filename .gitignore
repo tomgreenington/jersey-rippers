@@ -40,3 +40,7 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 public/*.png
+!public/buck-baums-breaks-logo.png
+!public/buck-baums-breaks-logo-dark.png
+!public/buck-baums-breaks-logo-textured.png
+!public/buck-baums-breaks-logo-americana.png

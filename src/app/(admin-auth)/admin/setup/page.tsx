@@ -1,12 +1,14 @@
 'use client';
 
+import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { AlertCircle, Loader2, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { AlertCircle, Loader2, Check } from 'lucide-react';
 import { createFirstAdmin } from '@/lib/supabase/admin-actions';
 import { adminsExist } from '@/lib/supabase/admin-auth';
+import { BRAND } from '@/lib/brand';
 
 export default function AdminSetupPage() {
   const router = useRouter();
@@ -19,7 +21,6 @@ export default function AdminSetupPage() {
   const [adminExists, setAdminExists] = useState(false);
   const [checking, setChecking] = useState(true);
 
-  // Check if admins already exist
   useEffect(() => {
     const check = async () => {
       const exists = await adminsExist();
@@ -34,7 +35,6 @@ export default function AdminSetupPage() {
     setError('');
     setLoading(true);
 
-    // Validate
     if (password !== confirmPassword) {
       setError('Passwords do not match');
       setLoading(false);
@@ -69,7 +69,7 @@ export default function AdminSetupPage() {
   if (checking) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center">
-        <p className="text-muted-foreground">Checking...</p>
+        <p className="text-muted-foreground">Checking admin setup...</p>
       </div>
     );
   }
@@ -97,7 +97,7 @@ export default function AdminSetupPage() {
       <div className="min-h-screen bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center p-4">
         <div className="w-full max-w-md bg-card rounded-lg border border-border shadow-lg p-8 text-center">
           <Check className="w-12 h-12 text-green-600 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold mb-2">Success!</h1>
+          <h1 className="text-2xl font-bold mb-2">Success</h1>
           <p className="text-muted-foreground">Admin account created. Redirecting to login...</p>
         </div>
       </div>
@@ -108,7 +108,15 @@ export default function AdminSetupPage() {
     <div className="min-h-screen bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center p-4">
       <div className="w-full max-w-md bg-card rounded-lg border border-border shadow-lg p-8">
         <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold text-primary">BUCKS BREAKS</h1>
+          <Image
+            src={BRAND.logo}
+            alt={BRAND.name}
+            width={120}
+            height={120}
+            className="mx-auto mb-4 h-28 w-28 object-contain"
+            priority
+          />
+          <h1 className="text-3xl font-bold text-primary">{BRAND.name}</h1>
           <p className="text-sm text-muted-foreground mt-2">Create First Admin Account</p>
         </div>
 
@@ -129,7 +137,7 @@ export default function AdminSetupPage() {
             <label className="text-sm font-medium block mb-2">Password</label>
             <Input
               type="password"
-              placeholder="••••••••"
+              placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={loading}
@@ -142,7 +150,7 @@ export default function AdminSetupPage() {
             <label className="text-sm font-medium block mb-2">Confirm Password</label>
             <Input
               type="password"
-              placeholder="••••••••"
+              placeholder="Password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               disabled={loading}
