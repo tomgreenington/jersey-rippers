@@ -215,24 +215,36 @@
   --spot-x: 50%;
   --spot-y: 50%;
   --spot-opacity: 0;
+  cursor: crosshair;
 }
 
 .mystery-pool-stage::after {
   content: "";
   position: absolute;
-  inset: 0;
+  left: var(--spot-x);
+  top: var(--spot-y);
+  z-index: 20;
+  width: 142px;
+  height: 142px;
   pointer-events: none;
+  border-radius: 999px;
   opacity: var(--spot-opacity);
-  transition: opacity 420ms ease;
+  transform: translate(-50%, -50%);
+  transition: opacity 180ms ease;
   background:
     radial-gradient(
-      circle 150px at var(--spot-x) var(--spot-y),
-      rgba(255, 255, 255, 0.18),
-      rgba(239, 68, 68, 0.16) 34%,
-      rgba(59, 130, 246, 0.08) 62%,
-      transparent 78%
+      circle,
+      rgba(255, 255, 255, 0.3) 0 34%,
+      rgba(255, 255, 255, 0.14) 54%,
+      transparent 74%
     );
-  mix-blend-mode: screen;
+  border: 1px solid rgba(255, 255, 255, 0.38);
+  box-shadow:
+    0 0 0 1px rgba(60, 59, 110, 0.24) inset,
+    0 0 24px rgba(178, 34, 52, 0.2);
+  mix-blend-mode: difference;
+  -webkit-backdrop-filter: invert(1) contrast(1.08) saturate(1.35);
+  backdrop-filter: invert(1) contrast(1.08) saturate(1.35);
 }
 
 .mystery-pool-card {
@@ -315,6 +327,7 @@
     animation: none;
   }
 
+  .mystery-pool-stage::after,
   .logo-spotlight-reveal,
   .logo-spotlight-invert {
     transition: none;
