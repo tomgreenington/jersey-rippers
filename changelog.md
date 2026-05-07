@@ -44,6 +44,7 @@ Each entry should follow this structure:
 - `npm audit --omit=dev` reports `found 0 vulnerabilities`.
 - `npm run lint` passes with existing warnings only.
 - `npm run build` passes.
+- Direct Stripe test-mode smoke for `ui_mode=embedded_page` with `Stripe-Version: 2026-03-25.dahlia` succeeds and returns a client secret; the throwaway session was expired immediately.
 
 ## 2026-05-06 - Webhook Readiness Status Alignment
 
