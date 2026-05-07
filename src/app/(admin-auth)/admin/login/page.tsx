@@ -1,12 +1,14 @@
 'use client';
 
+import Image from 'next/image';
+import Link from 'next/link';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { AlertCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { AlertCircle, Loader2 } from 'lucide-react';
-import { createClient } from '@supabase/supabase-js';
-import Link from 'next/link';
+import { createClient } from '@/lib/supabase/client';
+import { BRAND } from '@/lib/brand';
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -15,18 +17,15 @@ export default function AdminLoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
-
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
+    const supabase = createClient();
+
     try {
-      const { data, error: authError } = await supabase.auth.signInWithPassword({
+      const { error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
@@ -37,30 +36,25 @@ export default function AdminLoginPage() {
         return;
       }
 
-      if (!data.user?.id) {
-        setError('Login failed');
+      const res = await fetch('/api/admin/auth/check', { method: 'POST' });
+
+      if (!res.ok) {
+        await supabase.auth.signOut();
+        setError('Could not verify admin access');
         setLoading(false);
         return;
       }
 
-      // Verify user is admin
-      const res = await fetch('/api/admin/auth/check', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: data.user.id }),
-      });
-
       const { isAdmin } = await res.json();
 
       if (!isAdmin) {
-        // Sign out if not admin
         await supabase.auth.signOut();
         setError('You do not have admin access');
         setLoading(false);
         return;
       }
 
-      // Redirect to inventory
+      router.refresh();
       router.push('/admin/inventory');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
@@ -72,7 +66,15 @@ export default function AdminLoginPage() {
     <div className="min-h-screen bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center p-4">
       <div className="w-full max-w-md bg-card rounded-lg border border-border shadow-lg p-8">
         <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold text-primary">BUCKS BREAKS</h1>
+          <Image
+            src={BRAND.logo}
+            alt={BRAND.name}
+            width={120}
+            height={120}
+            className="mx-auto mb-4 h-28 w-28 object-contain"
+            priority
+          />
+          <h1 className="text-3xl font-bold text-primary">{BRAND.name}</h1>
           <p className="text-sm text-muted-foreground mt-2">Admin Portal</p>
         </div>
 
@@ -93,7 +95,7 @@ export default function AdminLoginPage() {
             <label className="text-sm font-medium block mb-2">Password</label>
             <Input
               type="password"
-              placeholder="••••••••"
+              placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={loading}
@@ -126,7 +128,12 @@ export default function AdminLoginPage() {
         </form>
 
         <div className="mt-6 pt-6 border-t border-border text-center text-sm text-muted-foreground">
-          <p>First time? <Link href="/admin/setup" className="text-primary hover:underline font-medium">Create first admin account</Link></p>
+          <p>
+            First time?{' '}
+            <Link href="/admin/setup" className="text-primary hover:underline font-medium">
+              Create first admin account
+            </Link>
+          </p>
         </div>
       </div>
     </div>

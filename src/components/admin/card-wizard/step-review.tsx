@@ -2,36 +2,46 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { createInventoryItem } from '@/lib/supabase/inventory-actions';
+import { createInventoryItem, publishInventoryItem } from '@/lib/supabase/inventory-actions';
 import { getSession } from '@/lib/supabase/auth-actions';
+import { uploadCardPhotos } from '@/lib/supabase/storage-actions';
 import { Button } from '@/components/ui/button';
 import { Loader2, Check, AlertCircle } from 'lucide-react';
-import type { InventoryType } from '@/types';
+import type { Condition, InventoryType } from '@/types';
+
+interface WizardPhoto {
+  id: string;
+  file: File;
+  previewUrl: string;
+}
+
+interface StepReviewState {
+  player: string;
+  setName: string;
+  cardNumber: string;
+  year: number | null;
+  team: string | null;
+  sport: string | null;
+  position: string | null;
+  rarity: string | null;
+  rookie: boolean;
+  parallelType: string | null;
+  manufacturer: string | null;
+  type: InventoryType;
+  condition: Condition | null;
+  gradeCompany: string | null;
+  gradeValue: string | null;
+  certNumber: string | null;
+  costBasis: number | null;
+  price: number | null;
+  spinPool: boolean;
+  photos: string[];
+  photoFiles: WizardPhoto[];
+}
 
 interface StepReviewProps {
-  state: {
-    player: string;
-    setName: string;
-    cardNumber: string;
-    year: number | null;
-    team: string | null;
-    sport: string | null;
-    position: string | null;
-    rarity: string | null;
-    rookie: boolean;
-    parallelType: string | null;
-    manufacturer: string | null;
-    type: InventoryType;
-    condition: string | null;
-    gradeCompany: string | null;
-    gradeValue: string | null;
-    certNumber: string | null;
-    costBasis: number | null;
-    price: number | null;
-    spinPool: boolean;
-    photos: string[];
-  };
-  updateState: (updates: any) => void;
+  state: StepReviewState;
+  updateState: (updates: Partial<StepReviewState>) => void;
 }
 
 interface CreateState {
@@ -39,9 +49,49 @@ interface CreateState {
   error: string;
   success: boolean;
   itemId?: string;
+  published?: boolean;
 }
 
-export default function StepReview({ state }: StepReviewProps) {
+function getPhotoExtension(file: File) {
+  if (file.type === 'image/png') return 'png';
+  if (file.type === 'image/webp') return 'webp';
+  if (file.type === 'image/gif') return 'gif';
+
+  const extension = file.name.split('.').pop()?.toLowerCase();
+  return extension && /^[a-z0-9]+$/.test(extension) ? extension : 'jpg';
+}
+
+function readFileAsBase64(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = typeof reader.result === 'string' ? reader.result : '';
+      resolve(result.split(',')[1] ?? '');
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function cleanText(value?: string | null) {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : undefined;
+}
+
+function buildInventoryTitle(state: StepReviewState) {
+  const subject = cleanText(state.player);
+  const setName = cleanText(state.setName);
+  const cardNumber = cleanText(state.cardNumber);
+  const titleParts = [
+    subject,
+    setName,
+    cardNumber ? `#${cardNumber.replace(/^#/, '')}` : undefined,
+  ].filter(Boolean);
+
+  return titleParts.length > 0 ? titleParts.join(' ') : 'Incomplete card intake';
+}
+
+export default function StepReview({ state, updateState }: StepReviewProps) {
   const router = useRouter();
   const [userId, setUserId] = useState<string | null>(null);
   const [createState, setCreateState] = useState<CreateState>({
@@ -62,6 +112,8 @@ export default function StepReview({ state }: StepReviewProps) {
 
   // Price is already in cents from the cost step
   const displayPrice = state.price ? `$${(state.price / 100).toFixed(2)}` : 'Not set';
+  const isMetadataIncomplete =
+    !cleanText(state.player) || !cleanText(state.setName) || !cleanText(state.cardNumber);
 
   const handlePublish = async () => {
     await handleCreate(true);
@@ -80,22 +132,55 @@ export default function StepReview({ state }: StepReviewProps) {
     setCreateState({ isLoading: true, error: '', success: false });
 
     try {
+      if (state.photoFiles.length === 0 && state.photos.length === 0) {
+        throw new Error('Select at least one card photo before saving');
+      }
+
+      let photoUrls = state.photos;
+
+      if (state.photoFiles.length > 0) {
+        const uploadedPhotoUrls: string[] = [];
+
+        for (const photo of state.photoFiles) {
+          const extension = getPhotoExtension(photo.file);
+          const filename = `card-photo-${Date.now()}-${crypto.randomUUID()}.${extension}`;
+          const uploadResult = await uploadCardPhotos([
+            {
+              name: filename,
+              base64: await readFileAsBase64(photo.file),
+              contentType: photo.file.type || 'image/jpeg',
+            },
+          ]);
+
+          if (!uploadResult.success || !uploadResult.urls?.[0]) {
+            throw new Error(uploadResult.error || 'Photo upload failed');
+          }
+
+          uploadedPhotoUrls.push(uploadResult.urls[0]);
+        }
+
+        photoUrls = uploadedPhotoUrls;
+        updateState({ photos: photoUrls, photoFiles: [] });
+      }
 
       const result = await createInventoryItem(
         {
           type: state.type,
-          title: `${state.player} ${state.setName} #${state.cardNumber}`,
-          player: state.player,
-          set_name: state.setName,
-          card_number: state.cardNumber,
+          title: buildInventoryTitle(state),
+          player: cleanText(state.player),
+          set_name: cleanText(state.setName),
+          card_number: cleanText(state.cardNumber),
           year: state.year ?? undefined,
+          rarity: cleanText(state.rarity) ?? undefined,
           condition: state.condition ?? undefined,
-          grade_company: state.gradeCompany ?? undefined,
-          grade_value: state.gradeValue ?? undefined,
-          cert_number: state.certNumber ?? undefined,
+          grade_company: cleanText(state.gradeCompany) ?? undefined,
+          grade_value: cleanText(state.gradeValue) ?? undefined,
+          cert_number: cleanText(state.certNumber) ?? undefined,
+          cost_basis: state.costBasis ?? undefined,
           price: state.price ?? 0,
-          photos: state.photos,
+          photos: photoUrls,
           quantity_on_hand: 1,
+          spin_pool: state.spinPool,
         },
         userId
       );
@@ -104,11 +189,28 @@ export default function StepReview({ state }: StepReviewProps) {
         throw new Error(result.error || 'Failed to create item');
       }
 
+      const itemId =
+        result.data &&
+        typeof result.data === 'object' &&
+        'id' in result.data &&
+        typeof result.data.id === 'string'
+          ? result.data.id
+          : undefined;
+
+      if (publishNow && itemId) {
+        const publishResult = await publishInventoryItem(itemId, userId);
+
+        if (!publishResult.success) {
+          throw new Error(publishResult.error || 'Item was saved as a draft, but publishing failed');
+        }
+      }
+
       setCreateState({
         isLoading: false,
         error: '',
         success: true,
-        itemId: result.data?.id,
+        itemId,
+        published: publishNow,
       });
 
       // Redirect to inventory list after short delay
@@ -125,7 +227,9 @@ export default function StepReview({ state }: StepReviewProps) {
     return (
       <div className="text-center py-8">
         <Check className="w-12 h-12 text-green-600 mx-auto mb-4" />
-        <h2 className="text-xl font-bold mb-2">Card Listed Successfully!</h2>
+        <h2 className="text-xl font-bold mb-2">
+          {createState.published ? 'Card Published Successfully' : 'Draft Saved Successfully'}
+        </h2>
         <p className="text-muted-foreground mb-4">
           Redirecting to inventory in a moment...
         </p>
@@ -143,19 +247,19 @@ export default function StepReview({ state }: StepReviewProps) {
           <div className="space-y-2 text-sm">
             <div>
               <span className="text-muted-foreground">Player:</span>
-              <p className="font-medium">{state.player}</p>
+              <p className="font-medium">{cleanText(state.player) ?? 'Not added'}</p>
             </div>
             <div>
               <span className="text-muted-foreground">Set:</span>
-              <p className="font-medium">{state.setName}</p>
+              <p className="font-medium">{cleanText(state.setName) ?? 'Not added'}</p>
             </div>
             <div>
               <span className="text-muted-foreground">Card #:</span>
-              <p className="font-medium">{state.cardNumber}</p>
+              <p className="font-medium">{cleanText(state.cardNumber) ?? 'Not added'}</p>
             </div>
             <div>
               <span className="text-muted-foreground">Year:</span>
-              <p className="font-medium">{state.year}</p>
+              <p className="font-medium">{state.year ?? 'Not added'}</p>
             </div>
             {state.rarity && (
               <div>
@@ -217,6 +321,10 @@ export default function StepReview({ state }: StepReviewProps) {
                 {displayPrice}
               </p>
             </div>
+            <div>
+              <span className="text-muted-foreground">Mystery Pool:</span>
+              <p className="font-medium">{state.spinPool ? 'Included' : 'Not included'}</p>
+            </div>
           </div>
         </div>
 
@@ -225,10 +333,25 @@ export default function StepReview({ state }: StepReviewProps) {
           <p className="text-xs font-medium text-muted-foreground uppercase mb-3">Photos</p>
           <div className="text-sm">
             <span className="text-muted-foreground">Count:</span>
-            <p className="font-medium">{state.photos.length} photo(s)</p>
+            <p className="font-medium">
+              {state.photos.length + state.photoFiles.length} photo(s)
+            </p>
           </div>
         </div>
       </div>
+
+      {isMetadataIncomplete && (
+        <div className="p-4 rounded-lg bg-amber-50 border border-amber-200 flex gap-3">
+          <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="font-medium text-amber-900">Details incomplete</p>
+            <p className="text-sm text-amber-800 mt-1">
+              This card can still be saved or published. Inventory will flag it
+              until the missing player, set, or card number is filled in.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Error Display */}
       {createState.error && (

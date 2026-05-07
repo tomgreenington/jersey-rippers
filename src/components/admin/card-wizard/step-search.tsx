@@ -5,27 +5,28 @@ import { searchCards, createCard } from '@/lib/supabase/card-actions';
 import { enrichCard } from '@/lib/enrich-card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AlertCircle, Loader2, Search } from 'lucide-react';
 import type { Card } from '@/types';
 
+interface StepSearchState {
+  cardId: string | null;
+  player: string;
+  year: number | null;
+  setName: string;
+  cardNumber: string;
+  team: string | null;
+  sport: string | null;
+  position: string | null;
+  rarity: string | null;
+  rookie: boolean;
+  parallelType: string | null;
+  manufacturer: string | null;
+}
+
 interface StepSearchProps {
-  state: {
-    cardId: string | null;
-    player: string;
-    year: number | null;
-    setName: string;
-    cardNumber: string;
-    team: string | null;
-    sport: string | null;
-    position: string | null;
-    rarity: string | null;
-    rookie: boolean;
-    parallelType: string | null;
-    manufacturer: string | null;
-  };
-  updateState: (updates: any) => void;
+  state: StepSearchState;
+  updateState: (updates: Partial<StepSearchState>) => void;
   onNext: () => void;
 }
 
@@ -184,7 +185,7 @@ export default function StepSearch({ state, updateState, onNext }: StepSearchPro
           ) : (
             <div className="p-4 rounded-lg bg-muted text-center">
               <p className="text-sm text-muted-foreground">No cards found</p>
-              <p className="text-xs text-muted-foreground mt-1">Click "Enrich" to add a new card</p>
+              <p className="text-xs text-muted-foreground mt-1">Click Enrich to add a new card</p>
             </div>
           )}
         </div>

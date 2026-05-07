@@ -1,19 +1,19 @@
-# Jersey Rippers - Deployment & Next Steps
+# Buck & Baums Breaks - Deployment & Next Steps
 
-**Status:** App is production-ready. Ready to share with partners for intake testing.
+**Status:** Admin intake is ready for partner testing after deploy/env verification. Customer checkout is not production-ready yet.
 
 ## Current State
 
-✅ **Phase 2 (95% complete):**
+✅ **Phase 2 admin intake:**
 - Admin card listing wizard: fully functional (6-step photo-first flow)
 - Supabase auth: signin/signup working
 - Auto-bucket creation: `card-photos` bucket created automatically on wizard load
 - Storage integration: photos upload to Supabase Storage
 - AI enrichment: Claude API for text-based card lookup
 - PSA comps: auto-pricing from PSA Auction site
-- All TypeScript compiles cleanly
+- Admin setup, login, and admin creation flow
 
-⏳ **Phase 3 (Incoming):**
+⏳ **Customer sales blockers:**
 - Customer storefront: browse all listed cards
 - Product detail page
 - Shopping cart
@@ -31,7 +31,7 @@
 
 2. **Connect to Vercel:**
    - Go to [vercel.com](https://vercel.com)
-   - Import repo → Select Jersey Rippers
+   - Import repo → Select Buck & Baums Breaks
    - Add env vars (copy from `.env.local`):
      - `NEXT_PUBLIC_SUPABASE_URL`
      - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
@@ -43,29 +43,29 @@
 
 3. **Share with Partners:**
    - Give them the Vercel URL
-   - Have them navigate to `/admin/inventory/new`
-   - They'll be redirected to signin
-   - **Note:** You need to manually add partners to Supabase Auth (create user accounts in Supabase dashboard, set role=admin/staff in profiles table)
+   - Have the first owner navigate to `/admin/setup`
+   - After the first admin exists, use `/admin/settings` to create additional admin logins
+   - Partners should sign in at `/admin/login`
 
 ## Before Partners Start Testing
 
-1. **Create admin users in Supabase:**
-   - Go to Supabase Dashboard → Authentication → Users
-   - Create user account for each partner
-   - In `profiles` table, set `role = 'admin'` for each user
+1. **Create admin users:**
+   - First admin: visit `/admin/setup`
+   - Additional admins: sign in as the first admin, then go to `/admin/settings`
+   - Admin records are stored in `admin_users`
 
 2. **Verify setup:**
    - Deploy to Vercel
    - Sign in with test admin account
    - Visit `/admin/inventory/new`
-   - Try uploading a photo (should work immediately — no manual bucket creation needed)
+   - Try uploading a photo and publishing a test card
 
 ## Next 24 Hours
 
 **After partners validate intake workflow:**
 1. Build customer storefront (browse listed items)
 2. Connect Stripe checkout
-3. Test full flow: admin upload → customer purchase → order confirmation
+3. Test full flow: admin upload -> customer purchase -> order confirmation
 4. Launch
 
 ## Key Credentials Needed

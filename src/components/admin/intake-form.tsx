@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { analyzeCardPhoto, createInventoryItem, publishInventoryItem } from '@/lib/supabase/inventory-actions';
+import { getSession } from '@/lib/supabase/auth-actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -144,6 +145,13 @@ export function IntakeForm() {
     setLoading(true);
     setError(null);
 
+    const { session } = await getSession();
+    if (!session?.user?.id) {
+      setError('Not authenticated');
+      setLoading(false);
+      return;
+    }
+
     const result = await createInventoryItem(
       {
         type: cardType,
@@ -163,7 +171,7 @@ export function IntakeForm() {
         storage_location: storageLocation,
         photos: [frontPhotoUrl, backPhotoUrl].filter(Boolean) as string[],
       },
-      'admin-user' // TODO: get actual user ID
+      session.user.id
     );
 
     if (!result.success) {
@@ -172,7 +180,21 @@ export function IntakeForm() {
       return;
     }
 
-    setCreatedItemId(result.data?.id);
+    const itemId =
+      result.data &&
+      typeof result.data === 'object' &&
+      'id' in result.data &&
+      typeof result.data.id === 'string'
+        ? result.data.id
+        : null;
+
+    if (!itemId) {
+      setError('Inventory item was created, but the new item ID was missing');
+      setLoading(false);
+      return;
+    }
+
+    setCreatedItemId(itemId);
     setStep('confirm');
     setLoading(false);
   };
@@ -184,7 +206,14 @@ export function IntakeForm() {
     setLoading(true);
     setError(null);
 
-    const result = await publishInventoryItem(createdItemId, 'admin-user');
+    const { session } = await getSession();
+    if (!session?.user?.id) {
+      setError('Not authenticated');
+      setLoading(false);
+      return;
+    }
+
+    const result = await publishInventoryItem(createdItemId, session.user.id);
 
     if (!result.success) {
       setError(result.error || 'Failed to publish item');
@@ -528,7 +557,7 @@ export function IntakeForm() {
         <div className="bg-green-900/20 border border-green-700 p-4 rounded">
           <p className="text-green-300">✓ Item created as DRAFT</p>
           <p className="text-sm text-gray-400 mt-2">
-            Review below and click "Publish" to make it live on the storefront.
+            Review below and click Publish to make it live on the storefront.
           </p>
         </div>
 

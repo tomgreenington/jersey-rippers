@@ -1,5 +1,4 @@
-import { getSession } from '@/lib/supabase/auth-actions';
-import { isUserAdmin } from '@/lib/supabase/admin-auth';
+import { getCurrentAdminUser } from '@/lib/supabase/admin-auth';
 import CardWizard from '@/components/admin/card-wizard';
 import { redirect } from 'next/navigation';
 
@@ -9,14 +8,8 @@ export const metadata = {
 };
 
 export default async function InventoryNewPage() {
-  const { session } = await getSession();
+  const { isAdmin } = await getCurrentAdminUser();
 
-  if (!session) {
-    redirect('/admin/login');
-  }
-
-  // Check if user is admin
-  const isAdmin = await isUserAdmin(session.user?.id);
   if (!isAdmin) {
     redirect('/admin/login');
   }

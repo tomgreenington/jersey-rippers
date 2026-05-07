@@ -153,7 +153,7 @@ Before starting the intake form, verify:
 ## File Structure Summary
 
 ```
-Jersey Rippers/
+Buck & Baums Breaks/
 ├── supabase/
 │   └── migrations/
 │       └── 20260306_init_schema.sql
@@ -230,7 +230,7 @@ npm run dev
 
 ## Final Notes
 
-**This session accomplished the foundational work for Jersey Rippers MVP.** The database is live, auth is working, and the team is ready to build the core intake + storefront flows next session.
+**This session accomplished the foundational work for Buck & Baums Breaks MVP.** The database is live, auth is working, and the team is ready to build the core intake + storefront flows next session.
 
 **All code is in a clean, compilable state.** No TODOs or hacks. Documentation is complete. Next session can jump straight into the admin intake form without loss of context.
 

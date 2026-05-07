@@ -4,9 +4,16 @@
  */
 
 import { fetchPSAComps } from '@/lib/psa-comps';
+import { getCurrentAdminUser } from '@/lib/supabase/admin-auth';
 import type { PSAComp } from '@/types';
 
 export async function GET(request: Request) {
+  const { isAdmin } = await getCurrentAdminUser();
+
+  if (!isAdmin) {
+    return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   const { searchParams } = new URL(request.url);
 
   const player = searchParams.get('player');

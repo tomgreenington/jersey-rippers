@@ -31,6 +31,15 @@ export type OrderStatus =
 
 export type SpinEventStatus = 'pending' | 'completed' | 'expired'
 
+export type FulfillmentStatus =
+  | 'needs_packing'
+  | 'packed'
+  | 'label_created'
+  | 'shipped'
+  | 'delivered'
+  | 'blocked'
+  | 'cancelled'
+
 // ── Core Entities ────────────────────────────────────────────────────
 
 export interface User {
@@ -71,6 +80,7 @@ export interface InventoryItem {
   reserved_until: string | null
   created_at: string
   updated_at: string
+  created_by: string | null
   updated_by: string | null
 }
 
@@ -133,6 +143,24 @@ export interface SpinEvent {
   status: SpinEventStatus
   nonce: string | null
   created_at: string
+}
+
+export interface FulfillmentTask {
+  id: string
+  order_id: string
+  order_item_id: string
+  inventory_item_id: string
+  assigned_to: string | null
+  status: FulfillmentStatus
+  storage_location: string | null
+  carrier: string | null
+  tracking_number: string | null
+  notes: string | null
+  created_at: string
+  updated_at: string
+  packed_at: string | null
+  shipped_at: string | null
+  delivered_at: string | null
 }
 
 export interface Card {

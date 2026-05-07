@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Poppins, JetBrains_Mono } from 'next/font/google'
 import './globals.css'
 import { ThemeProvider } from '@/components/theme-provider'
+import { BRAND } from '@/lib/brand'
 
 const poppins = Poppins({
   variable: '--font-poppins',
@@ -15,8 +16,8 @@ const jetbrainsMono = JetBrains_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'Bucks Breaks — Premium Collectible Cards',
-  description: 'Premium collectible card singles, graded slabs, and sealed product. Win up to 100 cards in our $5 daily spin!',
+  title: `${BRAND.name} - Premium Collectible Cards`,
+  description: BRAND.description,
 }
 
 export default function RootLayout({

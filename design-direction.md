@@ -18,7 +18,7 @@ Dark mode is the flagship experience. The cards are the stars — they pop again
 
 ## Color Palette
 
-### Primary — Jersey Red
+### Primary — Buck Red
 The signature color. Used for CTAs, key actions, price callouts, and brand moments.
 
 | Token | Hex | Usage |
