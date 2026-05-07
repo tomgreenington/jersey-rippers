@@ -1,17 +1,22 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { ArrowLeft, ArrowRight } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 
 import StepPhotos from './step-photos';
 import StepType from './step-type';
 import StepCost from './step-cost';
 import StepReview from './step-review';
-import { ensureCardPhotosBucket } from '@/lib/supabase/storage-actions';
 import type { InventoryType, Condition } from '@/types';
+
+interface WizardPhoto {
+  id: string;
+  file: File;
+  previewUrl: string;
+}
 
 interface WizardState {
   // Step 1: Search
@@ -44,6 +49,7 @@ interface WizardState {
 
   // Step 5: Photos
   photos: string[];
+  photoFiles: WizardPhoto[];
 
   // Additional
   title: string;
@@ -76,6 +82,7 @@ const INITIAL_STATE: WizardState = {
   spinPool: false, // Auto-assign if no price set
 
   photos: [],
+  photoFiles: [],
 
   title: '',
   description: null,
@@ -83,20 +90,38 @@ const INITIAL_STATE: WizardState = {
 
 const STEPS = ['Photos', 'Card Info', 'Cost', 'Review'];
 
+function revokePreviewUrl(photo: WizardPhoto) {
+  if (photo.previewUrl.startsWith('blob:')) {
+    URL.revokeObjectURL(photo.previewUrl);
+  }
+}
+
 export default function CardWizard() {
   const [currentStep, setCurrentStep] = useState(0);
   const [wizardState, setWizardState] = useState<WizardState>(INITIAL_STATE);
+  const latestPhotoFilesRef = useRef(wizardState.photoFiles);
 
-  // Ensure storage bucket exists on mount
   useEffect(() => {
-    ensureCardPhotosBucket().catch((err) => {
-      console.error('Failed to ensure storage bucket:', err);
-      // Continue anyway - user can debug from browser console
-    });
+    latestPhotoFilesRef.current = wizardState.photoFiles;
+  }, [wizardState.photoFiles]);
+
+  useEffect(() => {
+    return () => {
+      latestPhotoFilesRef.current.forEach(revokePreviewUrl);
+    };
   }, []);
 
   const updateState = (updates: Partial<WizardState>) => {
-    setWizardState((prev) => ({ ...prev, ...updates }));
+    setWizardState((prev) => {
+      if (updates.photoFiles) {
+        const nextPhotoIds = new Set(updates.photoFiles.map((photo) => photo.id));
+        prev.photoFiles
+          .filter((photo) => !nextPhotoIds.has(photo.id))
+          .forEach(revokePreviewUrl);
+      }
+
+      return { ...prev, ...updates };
+    });
   };
 
   const handleNext = () => {
@@ -169,7 +194,7 @@ export default function CardWizard() {
       </Card>
 
       {/* Navigation */}
-      <div className="flex justify-between gap-4">
+      <div className="flex justify-start gap-4">
         <Button
           variant="outline"
           onClick={handleBack}
@@ -179,13 +204,6 @@ export default function CardWizard() {
           <ArrowLeft className="w-4 h-4" />
           Back
         </Button>
-
-        {currentStep < STEPS.length - 1 && (
-          <Button onClick={handleNext} className="gap-2 bg-red-600 hover:bg-red-700">
-            Continue
-            <ArrowRight className="w-4 h-4" />
-          </Button>
-        )}
       </div>
     </div>
   );

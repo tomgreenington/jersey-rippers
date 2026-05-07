@@ -1,52 +1,40 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { BRAND } from '@/lib/brand'
 
 type Theme = 'light' | 'dark'
 
-export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>('dark')
-  const [mounted, setMounted] = useState(false)
-
-  // Hydrate from localStorage on mount
-  useEffect(() => {
-    const stored = localStorage.getItem('jersey-rippers-theme') as Theme | null
-    const initial = stored || 'dark'
-    setTheme(initial)
-    document.documentElement.classList.toggle('dark', initial === 'dark')
-    setMounted(true)
-  }, [])
-
-  const toggle = () => {
-    const newTheme = theme === 'dark' ? 'light' : 'dark'
-    setTheme(newTheme)
-    localStorage.setItem('jersey-rippers-theme', newTheme)
-    document.documentElement.classList.toggle('dark', newTheme === 'dark')
+function getStoredTheme(): Theme {
+  if (typeof window === 'undefined') {
+    return 'dark'
   }
 
-  // Avoid hydration mismatch by not rendering until mounted
-  if (!mounted) return <>{children}</>
+  return (localStorage.getItem(BRAND.themeStorageKey) as Theme | null) || 'dark'
+}
 
-  return (
-    <div data-theme-toggle={toggle} suppressHydrationWarning>
-      {children}
-    </div>
-  )
+export function ThemeProvider({ children }: { children: React.ReactNode }) {
+  const [theme] = useState<Theme>(getStoredTheme)
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', theme === 'dark')
+  }, [theme])
+
+  return <>{children}</>
 }
 
 // Hook to use toggle in components
 export function useThemeToggle() {
-  const [theme, setTheme] = useState<Theme>('dark')
+  const [theme, setTheme] = useState<Theme>(getStoredTheme)
 
   useEffect(() => {
-    const stored = localStorage.getItem('jersey-rippers-theme') as Theme | null
-    setTheme(stored || 'dark')
-  }, [])
+    document.documentElement.classList.toggle('dark', theme === 'dark')
+  }, [theme])
 
   const toggle = () => {
     const newTheme = theme === 'dark' ? 'light' : 'dark'
     setTheme(newTheme)
-    localStorage.setItem('jersey-rippers-theme', newTheme)
+    localStorage.setItem(BRAND.themeStorageKey, newTheme)
     document.documentElement.classList.toggle('dark', newTheme === 'dark')
   }
 

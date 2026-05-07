@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
-import { AlertCircle, AlertTriangle, Loader2 } from 'lucide-react';
+import { AlertCircle, AlertTriangle } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -15,18 +15,20 @@ import {
 } from '@/components/ui/table';
 import type { PSAComp } from '@/types';
 
+interface StepCompsState {
+  player: string;
+  setName: string;
+  cardNumber: string;
+  year: number | null;
+  gradeValue: string | null;
+  type: 'single' | 'slab' | 'sealed';
+  price: number | null;
+  spinPool: boolean;
+}
+
 interface StepCompsProps {
-  state: {
-    player: string;
-    setName: string;
-    cardNumber: string;
-    year: number | null;
-    gradeValue: string | null;
-    type: 'single' | 'slab' | 'sealed';
-    price: number | null;
-    spinPool: boolean;
-  };
-  updateState: (updates: any) => void;
+  state: StepCompsState;
+  updateState: (updates: Partial<StepCompsState>) => void;
   onNext: () => void;
 }
 

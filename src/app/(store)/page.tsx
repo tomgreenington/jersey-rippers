@@ -1,50 +1,52 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { ArrowRight, Zap, Trophy, Star } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { ProductCard } from '@/components/store/product-card'
-import { mockInventoryItems } from '@/lib/mock-data'
+import { MysteryPoolPreview } from '@/components/store/mystery-pool-preview'
+import { getCatalogOverview } from '@/lib/supabase/catalog'
+import { BRAND } from '@/lib/brand'
 
-const collections = [
-  {
-    title: 'Daily Singles',
-    description: 'Hot drops every day',
-    href: '/collections/singles',
-    icon: Zap,
-    count: mockInventoryItems.filter((i) => i.type === 'single').length,
-  },
-  {
-    title: 'Graded Slabs',
-    description: 'PSA, BGS, CGC verified',
-    href: '/collections/graded',
-    icon: Trophy,
-    count: mockInventoryItems.filter((i) => i.type === 'slab').length,
-  },
-  {
-    title: 'Sealed Product',
-    description: 'Packs & boxes unopened',
-    href: '/collections/sealed',
-    icon: Star,
-    count: mockInventoryItems.filter((i) => i.type === 'sealed').length,
-  },
-  {
-    title: 'New Releases',
-    description: 'Fresh inventory alert',
-    href: '/collections/new-drops',
-    icon: Zap,
-    count: mockInventoryItems.filter((i) => i.status === 'listed').length,
-  },
-]
+export const dynamic = 'force-dynamic'
 
-const featuredItems = mockInventoryItems
-  .filter((i) => i.status === 'listed')
-  .slice(0, 8)
+function getCollections(counts: Awaited<ReturnType<typeof getCatalogOverview>>['counts']) {
+  return [
+    {
+      title: 'Raw Singles',
+      description: 'Hot drops every day',
+      href: '/collections/singles',
+      icon: Zap,
+      count: counts.singles,
+    },
+    {
+      title: 'Slabs',
+      description: 'PSA, BGS, CGC verified',
+      href: '/collections/graded',
+      icon: Trophy,
+      count: counts.slabs,
+    },
+    {
+      title: 'Sealed',
+      description: 'Packs & boxes unopened',
+      href: '/collections/sealed',
+      icon: Star,
+      count: counts.sealed,
+    },
+    {
+      title: 'New Drops',
+      description: 'Fresh inventory alert',
+      href: '/collections/new-drops',
+      icon: Zap,
+      count: counts.newDrops,
+    },
+  ]
+}
 
-const spinItems = mockInventoryItems
-  .filter((i) => i.status === 'listed')
-  .slice(8, 12)
+export default async function HomePage() {
+  const { counts, featuredItems, spinItems } = await getCatalogOverview()
+  const collections = getCollections(counts)
 
-export default function HomePage() {
   return (
     <div className="space-y-20 py-12">
       {/* Hero Section */}
@@ -52,9 +54,17 @@ export default function HomePage() {
         <div className="absolute inset-0 bg-gradient-to-br from-accent/20 via-transparent to-secondary/10 opacity-60" />
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="relative flex flex-col items-center gap-8 py-24 text-center">
+            <Image
+              src={BRAND.logo}
+              alt={BRAND.name}
+              width={220}
+              height={220}
+              className="h-40 w-40 object-contain sm:h-48 sm:w-48"
+              priority
+            />
             <div className="space-y-4">
               <span className="inline-block rounded-full bg-primary/10 px-4 py-1 text-sm font-semibold text-primary">
-                🔥 WIN UP TO 100 CARDS
+                WIN UP TO 100 CARDS
               </span>
               <h1 className="text-5xl font-black tracking-tighter sm:text-6xl lg:text-7xl">
                 Premium Cards.{' '}
@@ -65,12 +75,12 @@ export default function HomePage() {
             </div>
             <p className="max-w-2xl text-lg text-foreground/70">
               Curated singles, graded slabs, and sealed product. Every card authenticated.
-              Every price fair. And your chance to win BIG on our daily $5 spin.
+              Every price fair. Every $5 mystery pull is a real card.
             </p>
             <div className="flex flex-col gap-3 sm:flex-row">
-              <Link href="/spin">
+              <Link href="/spin#random-card-checkout">
                 <Button size="lg" className="gap-2 bg-primary hover:bg-primary/90">
-                  🎰 SPIN NOW — WIN UP TO $500
+                  DRAW A CARD - $5
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
@@ -86,7 +96,7 @@ export default function HomePage() {
 
       {/* Collections Grid */}
       <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <h2 className="mb-10 text-3xl font-black tracking-tight">Shop By Category</h2>
+        <h2 className="mb-10 text-3xl font-black tracking-tight">Shop Cards</h2>
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {collections.map((col) => {
             const Icon = col.icon
@@ -112,19 +122,19 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Daily Spin Banner */}
+      {/* Random Card Banner */}
       <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <Link href="/spin">
+        <Link href="/spin#random-card-checkout">
           <Card className="group overflow-hidden bg-gradient-to-r from-primary/20 to-secondary/20 border-2 border-primary/30 transition-all hover:border-primary/60 hover:shadow-lg">
             <CardContent className="flex flex-col gap-6 p-8 sm:flex-row sm:items-center sm:justify-between">
               <div className="space-y-2">
                 <h3 className="text-2xl font-black tracking-tight text-primary">
-                  🎰 Daily $5 Spin
+                  $5 Mystery Cards
                 </h3>
                 <p className="text-lg text-foreground/80">
-                  Every spin could win you cards worth up to $500.
+                  Every card is $5. Not every card is the same.
                   <span className="block text-sm text-muted-foreground mt-1">
-                    Play daily for better odds. Limited spins per account.
+                    Pull anything from $0.01 to $500.
                   </span>
                 </p>
               </div>
@@ -132,7 +142,7 @@ export default function HomePage() {
                 size="lg"
                 className="gap-2 bg-primary hover:bg-primary/90 whitespace-nowrap"
               >
-                SPIN NOW
+                DRAW NOW
                 <ArrowRight className="h-4 w-4" />
               </Button>
             </CardContent>
@@ -154,9 +164,15 @@ export default function HomePage() {
           </Link>
         </div>
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-          {featuredItems.map((item) => (
-            <ProductCard key={item.id} item={item} />
-          ))}
+          {featuredItems.length > 0 ? (
+            featuredItems.map((item) => (
+              <ProductCard key={item.id} item={item} />
+            ))
+          ) : (
+            <div className="col-span-full rounded-lg border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+              No listed cards yet.
+            </div>
+          )}
         </div>
       </section>
 
@@ -165,27 +181,15 @@ export default function HomePage() {
         <div className="mb-10">
           <h2 className="text-3xl font-black tracking-tight">What You Could Win</h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            Cards in this month's spin pool
+            Cards in the current random pool
           </p>
         </div>
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 mb-8">
-          {spinItems.map((item) => (
-            <ProductCard key={item.id} item={item} />
-          ))}
-        </div>
-        <div className="flex justify-center">
-          <Link href="/spin">
-            <Button size="lg" className="gap-2 bg-primary hover:bg-primary/90">
-              Try Your Luck — $5 Per Spin
-              <ArrowRight className="h-4 w-4" />
-            </Button>
-          </Link>
-        </div>
+        <MysteryPoolPreview items={spinItems} />
       </section>
 
       {/* Why Choose Us */}
       <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <h2 className="mb-10 text-center text-3xl font-black tracking-tight">Why Choose Jersey Rippers</h2>
+        <h2 className="mb-10 text-center text-3xl font-black tracking-tight">Why Choose {BRAND.name}</h2>
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
           {[
             {
@@ -197,8 +201,8 @@ export default function HomePage() {
               description: 'Competitive prices based on real market data',
             },
             {
-              title: 'Daily Spin Rewards',
-              description: 'Win cards worth up to $500 for just $5',
+              title: '$5 Mystery Cards',
+              description: 'Pull anything from a tiny card to a massive hit',
             },
           ].map((item, i) => (
             <Card key={i} className="bg-accent/50 border-accent">
@@ -218,7 +222,7 @@ export default function HomePage() {
             Ready to Build Your Collection?
           </h2>
           <p className="mt-4 text-lg text-foreground/80">
-            Start shopping premium cards or spin to win today
+            Start shopping premium cards or draw mystery cards today
           </p>
           <div className="mt-8 flex flex-col gap-3 justify-center sm:flex-row">
             <Link href="/collections/singles">
@@ -226,9 +230,9 @@ export default function HomePage() {
                 Browse Cards
               </Button>
             </Link>
-            <Link href="/spin">
+            <Link href="/spin#random-card-checkout">
               <Button size="lg" variant="outline">
-                🎰 Play Daily Spin
+                Draw a Card
               </Button>
             </Link>
           </div>

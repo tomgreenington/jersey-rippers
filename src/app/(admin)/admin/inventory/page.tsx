@@ -3,20 +3,41 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { getServiceRoleClient } from '@/lib/supabase/server';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Plus, ChevronRight } from 'lucide-react';
 
 interface InventoryItem {
   id: string;
   sku: string;
   title: string;
-  player: string;
-  set_name: string;
+  player: string | null;
+  set_name: string | null;
+  card_number: string | null;
+  type: string;
   price: number;
   status: string;
   photos: string[];
+  spin_pool: boolean;
+  quantity_on_hand: number;
   created_at: string;
+}
+
+function hasMissingDetails(item: InventoryItem) {
+  return !item.player?.trim() || !item.set_name?.trim() || !item.card_number?.trim();
+}
+
+function getDetailLine(item: InventoryItem) {
+  const parts = [
+    item.set_name?.trim(),
+    item.card_number?.trim() ? `#${item.card_number.trim().replace(/^#/, '')}` : null,
+  ].filter(Boolean);
+
+  return parts.length > 0 ? parts.join(' ') : 'Set and card number not added';
+}
+
+function getAdminStatusLabel(item: InventoryItem) {
+  return hasMissingDetails(item) ? `${item.status} · incomplete` : item.status;
 }
 
 export default function InventoryPage() {
@@ -72,6 +93,27 @@ export default function InventoryPage() {
         </Link>
       </div>
 
+      {items.length > 0 && (
+        <div className="grid gap-3 sm:grid-cols-3">
+          <div className="rounded-lg border border-border bg-card p-4">
+            <p className="text-xs font-medium uppercase text-muted-foreground">Total</p>
+            <p className="mt-1 text-2xl font-bold">{items.length}</p>
+          </div>
+          <div className="rounded-lg border border-border bg-card p-4">
+            <p className="text-xs font-medium uppercase text-muted-foreground">Listed</p>
+            <p className="mt-1 text-2xl font-bold">
+              {items.filter((item) => item.status === 'listed').length}
+            </p>
+          </div>
+          <div className="rounded-lg border border-border bg-card p-4">
+            <p className="text-xs font-medium uppercase text-muted-foreground">Needs Details</p>
+            <p className="mt-1 text-2xl font-bold">
+              {items.filter(hasMissingDetails).length}
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Error Display */}
       {error && (
         <div className="p-4 rounded-lg bg-red-50 border border-red-200">
@@ -110,15 +152,28 @@ export default function InventoryPage() {
                     </div>
                   )}
                   <div className="absolute top-2 right-2 bg-background/80 backdrop-blur px-2 py-1 rounded text-xs font-medium">
-                    {item.status}
+                    {getAdminStatusLabel(item)}
                   </div>
                 </div>
 
                 {/* Details */}
                 <div className="p-4">
+                  <div className="mb-2 flex flex-wrap items-center gap-2">
+                    <Badge variant="outline" className="capitalize">
+                      {item.type}
+                    </Badge>
+                    {item.spin_pool && <Badge variant="secondary">Mystery pool</Badge>}
+                    {hasMissingDetails(item) && (
+                      <Badge className="border-amber-200 bg-amber-50 text-amber-800">
+                        Incomplete details
+                      </Badge>
+                    )}
+                  </div>
                   <p className="text-xs text-muted-foreground mb-1">{item.sku}</p>
-                  <h3 className="font-semibold text-sm mb-1 line-clamp-2">{item.player}</h3>
-                  <p className="text-xs text-muted-foreground mb-3">{item.set_name} #{item.title.split('#').pop()}</p>
+                  <h3 className="font-semibold text-sm mb-1 line-clamp-2">
+                    {item.title || item.player || 'Incomplete card intake'}
+                  </h3>
+                  <p className="text-xs text-muted-foreground mb-3">{getDetailLine(item)}</p>
                   <div className="flex items-center justify-between">
                     <p className="font-bold text-primary">${(item.price / 100).toFixed(2)}</p>
                     <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:translate-x-1 transition-transform" />

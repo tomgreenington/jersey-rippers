@@ -19,6 +19,7 @@ export function ProductCard({ item }: { item: InventoryItem }) {
               src={image}
               alt={item.title}
               fill
+              unoptimized={image.startsWith('http')}
               className="object-cover transition-transform group-hover:scale-105"
             />
           ) : (
