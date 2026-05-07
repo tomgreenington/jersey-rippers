@@ -132,6 +132,58 @@
   --info: #3b82f6;
 }
 
+.americana {
+  --background: #f8f9fb;
+  --foreground: #102a5c;
+  --card: #ffffff;
+  --card-foreground: #102a5c;
+  --popover: #ffffff;
+  --popover-foreground: #102a5c;
+  --primary: #b22234;
+  --primary-foreground: #ffffff;
+  --secondary: #3c3b6e;
+  --secondary-foreground: #ffffff;
+  --muted: #edf1f7;
+  --muted-foreground: #536174;
+  --accent: #f4d35e;
+  --accent-foreground: #102a5c;
+  --destructive: #b22234;
+  --border: #c9d2df;
+  --input: #ffffff;
+  --ring: #3c3b6e;
+  --chart-1: #b22234;
+  --chart-2: #3c3b6e;
+  --chart-3: #ffffff;
+  --chart-4: #f4d35e;
+  --chart-5: #1f77b4;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #102a5c;
+  --sidebar-primary: #b22234;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #edf1f7;
+  --sidebar-accent-foreground: #102a5c;
+  --sidebar-border: #c9d2df;
+  --sidebar-ring: #3c3b6e;
+  --success: #1d7f45;
+  --warning: #f4d35e;
+  --error: #b22234;
+  --info: #3c3b6e;
+}
+
+.americana body {
+  background-image:
+    linear-gradient(
+      180deg,
+      rgba(178, 34, 52, 0.07),
+      transparent 18rem
+    ),
+    repeating-linear-gradient(
+      0deg,
+      rgba(178, 34, 52, 0.035) 0 18px,
+      rgba(255, 255, 255, 0) 18px 36px
+    );
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

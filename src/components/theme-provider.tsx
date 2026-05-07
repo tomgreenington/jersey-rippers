@@ -3,21 +3,33 @@
 import { useEffect, useState } from 'react'
 import { BRAND } from '@/lib/brand'
 
-type Theme = 'light' | 'dark'
+export type Theme = 'light' | 'dark' | 'americana'
+
+const THEMES: Theme[] = ['light', 'dark', 'americana']
+
+function isTheme(value: string | null): value is Theme {
+  return Boolean(value && THEMES.includes(value as Theme))
+}
+
+function applyTheme(theme: Theme) {
+  document.documentElement.classList.toggle('dark', theme === 'dark')
+  document.documentElement.classList.toggle('americana', theme === 'americana')
+}
 
 function getStoredTheme(): Theme {
   if (typeof window === 'undefined') {
     return 'dark'
   }
 
-  return (localStorage.getItem(BRAND.themeStorageKey) as Theme | null) || 'dark'
+  const storedTheme = localStorage.getItem(BRAND.themeStorageKey)
+  return isTheme(storedTheme) ? storedTheme : 'dark'
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme] = useState<Theme>(getStoredTheme)
 
   useEffect(() => {
-    document.documentElement.classList.toggle('dark', theme === 'dark')
+    applyTheme(theme)
   }, [theme])
 
   return <>{children}</>
@@ -28,15 +40,18 @@ export function useThemeToggle() {
   const [theme, setTheme] = useState<Theme>(getStoredTheme)
 
   useEffect(() => {
-    document.documentElement.classList.toggle('dark', theme === 'dark')
+    applyTheme(theme)
   }, [theme])
 
-  const toggle = () => {
-    const newTheme = theme === 'dark' ? 'light' : 'dark'
+  const setSelectedTheme = (newTheme: Theme) => {
     setTheme(newTheme)
     localStorage.setItem(BRAND.themeStorageKey, newTheme)
-    document.documentElement.classList.toggle('dark', newTheme === 'dark')
+    applyTheme(newTheme)
   }
 
-  return { theme, toggle }
+  const toggle = () => {
+    setSelectedTheme(theme === 'dark' ? 'light' : 'dark')
+  }
+
+  return { theme, setTheme: setSelectedTheme, toggle }
 }
