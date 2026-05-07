@@ -221,8 +221,50 @@
   opacity: 1;
 }
 
+.logo-spotlight {
+  --logo-spot-x: 50%;
+  --logo-spot-y: 50%;
+  --logo-spot-opacity: 0;
+  background: transparent;
+}
+
+.logo-spotlight-reveal {
+  opacity: var(--logo-spot-opacity);
+  transition: opacity 260ms ease;
+  -webkit-mask-image: radial-gradient(
+    circle 124px at var(--logo-spot-x) var(--logo-spot-y),
+    rgba(0, 0, 0, 1) 0 68px,
+    rgba(0, 0, 0, 0.68) 92px,
+    transparent 124px
+  );
+  mask-image: radial-gradient(
+    circle 124px at var(--logo-spot-x) var(--logo-spot-y),
+    rgba(0, 0, 0, 1) 0 68px,
+    rgba(0, 0, 0, 0.68) 92px,
+    transparent 124px
+  );
+}
+
+.logo-spotlight-invert {
+  pointer-events: none;
+  opacity: var(--logo-spot-opacity);
+  transition: opacity 260ms ease;
+  background: radial-gradient(
+    circle 96px at var(--logo-spot-x) var(--logo-spot-y),
+    rgba(255, 255, 255, 0.32),
+    rgba(255, 255, 255, 0.12) 48%,
+    transparent 72%
+  );
+  mix-blend-mode: difference;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .mystery-pool-card {
     animation: none;
+  }
+
+  .logo-spotlight-reveal,
+  .logo-spotlight-invert {
+    transition: none;
   }
 }

@@ -30,6 +30,7 @@ The immediate product goal is **Rip-to-Ship V1**: a professional card-selling ma
 - Standard cart Stripe Checkout session creation exists in `src/lib/supabase/cart-checkout-actions.ts`.
 - Random-card `$5` Stripe Checkout session creation exists in `src/lib/supabase/random-card-actions.ts`.
 - Standard cart and `$5` mystery checkout now create Stripe `embedded_page` sessions and render Stripe's secure payment form on-site.
+- Stripe checkout requests pin `Stripe-Version: 2026-03-25.dahlia`, which is required for `ui_mode=embedded_page`.
 - Stripe webhook route exists at `src/app/api/webhooks/stripe/route.ts`.
 - `fulfillment_tasks` migration exists, is already applied in live Supabase, and checkout finalization creates tasks idempotently.
 - Checkout idempotency guard migration exists and is already applied in live Supabase.
@@ -67,11 +68,12 @@ The immediate product goal is **Rip-to-Ship V1**: a professional card-selling ma
 - Cart and mystery checkout render the embedded Stripe form on-page and use `redirect_on_completion=never` so non-redirect payment methods stay in the same window.
 - `npm audit --omit=dev` now reports `found 0 vulnerabilities`.
 - `npm run lint` and `npm run build` passed after the embedded checkout changes.
+- A direct Stripe test-mode smoke check confirmed `ui_mode=embedded_page` works when requests send `Stripe-Version: 2026-03-25.dahlia`; the throwaway session was expired immediately.
 
 ### Not Launch-Ready
 
 - Standard cart checkout is partially verified through a paid success-page fallback, but webhook-first completion is not proven.
-- Embedded standard cart checkout needs a real Stripe test-mode run.
+- Embedded standard cart checkout session creation is smoke-tested, but it still needs a real Stripe test-mode payment run.
 - Embedded mystery checkout needs a real Stripe test-mode run with a listed spin-pool item.
 - Webhook code exists, but Stripe has no configured test webhook endpoint, local `STRIPE_WEBHOOK_SECRET` is still placeholder/unconfigured, and webhook-driven completion has not been proven through Stripe CLI/dashboard.
 - Confirmation pages can finalize from browser success pages, which is useful for local testing but is not enough for production confidence.

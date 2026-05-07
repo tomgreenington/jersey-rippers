@@ -8,5 +8,7 @@ export const BRAND = {
     'Premium collectible card singles, graded slabs, sealed product, and $5 random-card pulls.',
   logo: '/buck-baums-breaks-logo.png',
   logoDark: '/buck-baums-breaks-logo-dark.png',
+  logoTextured: '/buck-baums-breaks-logo-textured.png',
+  logoAmericana: '/buck-baums-breaks-logo-americana.png',
   themeStorageKey: 'buck-baums-breaks-theme',
 } as const

@@ -10,6 +10,7 @@ import type { InventoryItem } from '@/types'
 
 const RANDOM_CARD_PRICE_CENTS = 500
 const RESERVATION_MINUTES = 30
+const STRIPE_API_VERSION = '2026-03-25.dahlia'
 const WEBHOOK_SIGNATURE_TOLERANCE_SECONDS = 300
 
 type StripeCheckoutSession = {
@@ -135,6 +136,7 @@ async function stripeRequest<T>(
 ): Promise<T> {
   const headers: Record<string, string> = {
     Authorization: `Bearer ${getStripeSecretKey()}`,
+    'Stripe-Version': STRIPE_API_VERSION,
   }
 
   if (init.body) {

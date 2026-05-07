@@ -1,10 +1,10 @@
 import Link from 'next/link'
-import Image from 'next/image'
 import { ArrowRight, Zap, Trophy, Star } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { ProductCard } from '@/components/store/product-card'
 import { MysteryPoolPreview } from '@/components/store/mystery-pool-preview'
+import { LogoSpotlight } from '@/components/store/logo-spotlight'
 import { getCatalogOverview } from '@/lib/supabase/catalog'
 import { BRAND } from '@/lib/brand'
 
@@ -54,13 +54,13 @@ export default async function HomePage() {
         <div className="absolute inset-0 bg-gradient-to-br from-accent/20 via-transparent to-secondary/10 opacity-60" />
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="relative flex flex-col items-center gap-8 py-24 text-center">
-            <Image
-              src={BRAND.logo}
+            <LogoSpotlight
+              baseSrc={BRAND.logoTextured}
+              revealSrc={BRAND.logoAmericana}
               alt={BRAND.name}
-              width={220}
-              height={220}
-              className="h-40 w-40 object-contain sm:h-48 sm:w-48"
+              className="h-56 w-56 sm:h-72 sm:w-72"
               priority
+              sizes="(min-width: 640px) 18rem, 14rem"
             />
             <div className="space-y-4">
               <span className="inline-block rounded-full bg-primary/10 px-4 py-1 text-sm font-semibold text-primary">

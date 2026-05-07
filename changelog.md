@@ -25,6 +25,28 @@ Each entry should follow this structure:
 
 <!-- Add new entries below this line, newest first -->
 
+## 2026-05-07 - Logo Variants And Stripe Embedded Version
+
+**Session Summary**
+- Completed: Added the supplied textured logo asset, generated an Americana transparent logo variant, wired the homepage hero to reveal the Americana variant with a mouse spotlight, pinned Stripe checkout requests to the embedded Checkout API version, removed the first-admin setup flow after setup, and promoted Marc Buck to admin in live Supabase.
+- Stopped at: Code builds and lints. Stripe webhook setup and real embedded payment verification still need external Stripe/Vercel setup.
+- Next session should: Add the real Stripe webhook secret, configure the endpoint, and run one embedded cart payment plus one embedded mystery payment.
+
+**Changes**
+- `public/buck-baums-breaks-logo-textured.png`: Added the supplied dark/backdrop logo.
+- `public/buck-baums-breaks-logo-americana.png`: Added a transparent red/white/blue stars-and-stripes logo variant.
+- `src/components/store/logo-spotlight.tsx` and `src/app/globals.css`: Added a mouse-positioned reveal/invert spotlight for the homepage logo.
+- `src/app/(store)/page.tsx`: Uses the textured logo in the hero and reveals the Americana variant on hover.
+- `src/lib/supabase/cart-checkout-actions.ts` and `src/lib/supabase/random-card-actions.ts`: Send `Stripe-Version: 2026-03-25.dahlia` with Stripe REST requests so `ui_mode=embedded_page` is accepted.
+- `src/app/(admin-auth)/admin/login/page.tsx`, `src/app/(admin-auth)/admin/setup/page.tsx`, `src/lib/supabase/admin-actions.ts`, and `src/lib/supabase/admin-auth.ts`: Removed the first-admin setup route/helper now that the first admin exists; additional admins should be added by an existing admin.
+- Live Supabase: Promoted `697f97d9-cbab-4da9-bac4-d4b396cb519f` / `Marcwbuck@gmail.com` to `admin` in `profiles` so he can add cards.
+
+**Verification**
+- `npm audit --omit=dev` reports `found 0 vulnerabilities`.
+- `npm run lint` passes with existing warnings only.
+- `npm run build` passes.
+- Direct Stripe test-mode smoke for `ui_mode=embedded_page` with `Stripe-Version: 2026-03-25.dahlia` succeeds and returns a client secret; the throwaway session was expired immediately.
+
 ## 2026-05-06 - Webhook Readiness Status Alignment
 
 **Session Summary**

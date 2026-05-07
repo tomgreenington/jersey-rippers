@@ -123,6 +123,7 @@ Expected implementation details:
 - Do not reapply `supabase/migrations/20260506_add_checkout_idempotency_guards.sql` unless live schema inspection shows it is missing; it was applied live on 2026-05-06.
 - Next is on `16.2.5`, `eslint-config-next` is matched to `16.2.5`, and package overrides pin Next's nested PostCSS to `8.5.10` so production audit is clean.
 - Cart and mystery checkout sessions use `ui_mode=embedded_page` with `redirect_on_completion=never`; non-redirect payment methods stay in the same browser window.
+- Cart and mystery checkout Stripe REST requests send `Stripe-Version: 2026-03-25.dahlia`; without this, Stripe rejects `ui_mode=embedded_page`.
 - The existing `fulfillment_tasks` table should match these columns:
 
 ```sql

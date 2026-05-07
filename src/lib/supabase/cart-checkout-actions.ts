@@ -10,6 +10,7 @@ import type { InventoryItem } from '@/types'
 
 const RESERVATION_MINUTES = 30
 const MAX_CART_ITEMS = 20
+const STRIPE_API_VERSION = '2026-03-25.dahlia'
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
@@ -137,6 +138,7 @@ async function stripeRequest<T>(
 ): Promise<T> {
   const requestHeaders: Record<string, string> = {
     Authorization: `Bearer ${getStripeSecretKey()}`,
+    'Stripe-Version': STRIPE_API_VERSION,
   }
 
   if (init.body) {

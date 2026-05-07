@@ -115,59 +115,6 @@ async function requireCurrentAdmin(): Promise<{ userId?: string; error?: string 
 }
 
 /**
- * Create first admin user (setup only)
- * This should only be called once from /admin/setup
- */
-export async function createFirstAdmin(
-  email: string,
-  password: string
-): Promise<{ success: boolean; error?: string; userId?: string }> {
-  try {
-    const supabase = getServiceRoleClient();
-    const mode = await getAdminStoreMode(supabase);
-
-    // Check if any admins exist
-    const adminCount = await countExistingAdmins(supabase, mode);
-    if (adminCount > 0) {
-      return { success: false, error: 'First admin already exists' };
-    }
-
-    // Create user in auth
-    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-      email,
-      password,
-      email_confirm: true,
-    });
-
-    if (authError) {
-      return { success: false, error: authError.message };
-    }
-
-    const userId = authData.user?.id;
-    if (!userId) {
-      return { success: false, error: 'Failed to create user' };
-    }
-
-    // Add to the configured admin store
-    const { error: adminError } = await grantAdminAccess(
-      supabase,
-      mode,
-      userId,
-      email
-    );
-
-    if (adminError) {
-      return { success: false, error: adminError.message };
-    }
-
-    return { success: true, userId };
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    return { success: false, error: message };
-  }
-}
-
-/**
  * Create additional admin user (requires authentication)
  */
 export async function createAdminUser(

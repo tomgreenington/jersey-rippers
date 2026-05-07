@@ -28,17 +28,20 @@ Inventory intake -> listed catalog -> embedded checkout -> Stripe payment -> ord
 - `npm audit --omit=dev` reports `found 0 vulnerabilities`.
 - `npm run lint` passes with existing warnings only.
 - `npm run build` passes.
+- A direct Stripe test-mode smoke check for `ui_mode=embedded_page` with `Stripe-Version: 2026-03-25.dahlia` succeeded and the throwaway session was expired immediately.
 
 ## Latest Important Changes
 
 - `src/lib/supabase/cart-checkout-actions.ts`
   - Creates Stripe Checkout Sessions with `ui_mode=embedded_page`.
   - Sets `redirect_on_completion=never`.
+  - Sends `Stripe-Version: 2026-03-25.dahlia` so Stripe accepts `embedded_page`.
   - Returns `clientSecret` and `sessionId` instead of a hosted Stripe URL.
   - Expired cart reservation cleanup cancels related pending cart orders.
 
 - `src/lib/supabase/random-card-actions.ts`
   - Creates embedded Checkout Sessions for mystery cards.
+  - Sends `Stripe-Version: 2026-03-25.dahlia` so Stripe accepts `embedded_page`.
   - Reselects existing orders on duplicate Stripe-session replay.
   - Rejects placeholder webhook secrets and stale webhook signatures.
 
@@ -66,7 +69,7 @@ The big blocker is **Stripe webhook setup**.
 - `NEXT_PUBLIC_APP_URL` is still `http://localhost:3000`.
 - Stripe CLI is not installed locally.
 - Vercel CLI is not installed locally and this workspace is not linked to a Vercel project.
-- Embedded checkout has not been proven with a real test-mode payment after the embedded conversion.
+- Embedded checkout session creation has been proven with a direct Stripe API smoke check, but has not been proven with a real test-mode payment after the embedded conversion.
 - Mystery checkout has not been proven; live `spin_events` count was previously `0`.
 
 Do not launch checkout to real customers until webhook-first completion is verified.

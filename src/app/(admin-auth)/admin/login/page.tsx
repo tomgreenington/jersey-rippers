@@ -1,7 +1,6 @@
 'use client';
 
 import Image from 'next/image';
-import Link from 'next/link';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AlertCircle, Loader2 } from 'lucide-react';
@@ -128,12 +127,7 @@ export default function AdminLoginPage() {
         </form>
 
         <div className="mt-6 pt-6 border-t border-border text-center text-sm text-muted-foreground">
-          <p>
-            First time?{' '}
-            <Link href="/admin/setup" className="text-primary hover:underline font-medium">
-              Create first admin account
-            </Link>
-          </p>
+          <p>Need access? Ask an admin to add your account.</p>
         </div>
       </div>
     </div>
