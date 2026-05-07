@@ -113,29 +113,3 @@ export async function getCurrentAdminUser(): Promise<{
     return { user: null, isAdmin: false, role: null, error: message };
   }
 }
-
-/**
- * Check if any admins exist (for setup flow)
- */
-export async function adminsExist(): Promise<boolean> {
-  try {
-    const supabase = getServiceRoleClient();
-
-    const { count, error } = await supabase
-      .from('admin_users')
-      .select('*', { count: 'exact', head: true });
-
-    if (error && isMissingAdminUsersTable(error)) {
-      const { count: profileCount } = await supabase
-        .from('profiles')
-        .select('*', { count: 'exact', head: true })
-        .eq('role', 'admin');
-
-      return (profileCount ?? 0) > 0;
-    }
-
-    return (count ?? 0) > 0;
-  } catch {
-    return false;
-  }
-}
