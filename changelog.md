@@ -25,6 +25,22 @@ Each entry should follow this structure:
 
 <!-- Add new entries below this line, newest first -->
 
+## 2026-05-07 - Americana Theme Switcher
+
+**Session Summary**
+- Completed: Added the Americana flag option to the storefront theme switcher and scoped the CSS invert mouse lens to the mystery-card pool box.
+- Stopped at: Theme selection, lint, and build are green.
+- Next session should: Continue with Stripe webhook setup and real payment verification.
+
+**Changes**
+- `src/components/theme-provider.tsx`: Added `americana` as a persisted theme option.
+- `src/components/store/header.tsx`: Replaced the two-state theme toggle with light, dark, and flag/Americana controls, and swaps the header logo to the Americana logo when selected.
+- `src/app/globals.css`: Added Americana red/white/blue theme tokens, a subtle stripes background treatment, and a mystery-box-only mouse-following invert lens using `backdrop-filter` plus `mix-blend-mode`.
+
+**Verification**
+- `npm run lint` passes with existing warnings only.
+- `npm run build` passes.
+
 ## 2026-05-07 - Logo Variants And Stripe Embedded Version
 
 **Session Summary**

@@ -3,7 +3,16 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Dices, Menu, ShoppingCart, Search, Moon, Sun, PackageCheck } from 'lucide-react'
+import {
+  Dices,
+  Menu,
+  ShoppingCart,
+  Search,
+  Moon,
+  Sun,
+  PackageCheck,
+  Flag,
+} from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Sheet,
@@ -50,9 +59,10 @@ const categories = [
 ]
 
 export function StoreHeader() {
-  const { theme, toggle } = useThemeToggle()
+  const { theme, setTheme } = useThemeToggle()
   const { itemCount } = useCart()
   const [hasUser, setHasUser] = useState(false)
+  const headerLogo = theme === 'americana' ? BRAND.logoAmericana : BRAND.logo
 
   useEffect(() => {
     const supabase = createClient()
@@ -84,7 +94,7 @@ export function StoreHeader() {
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2">
             <Image
-              src={BRAND.logo}
+              src={headerLogo}
               alt={BRAND.name}
               width={48}
               height={48}
@@ -131,19 +141,38 @@ export function StoreHeader() {
               </Button>
             </Link>
 
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={toggle}
-              className="transition-colors"
+            <div
+              className="flex h-9 items-center rounded-md border border-border bg-background/80 p-0.5"
+              aria-label="Theme"
             >
-              {theme === 'dark' ? (
-                <Sun className="h-5 w-5" />
-              ) : (
-                <Moon className="h-5 w-5" />
-              )}
-              <span className="sr-only">Toggle theme</span>
-            </Button>
+              <Button
+                variant={theme === 'light' ? 'default' : 'ghost'}
+                size="icon-sm"
+                onClick={() => setTheme('light')}
+                className="h-8 w-8"
+              >
+                <Sun className="h-4 w-4" />
+                <span className="sr-only">Light theme</span>
+              </Button>
+              <Button
+                variant={theme === 'dark' ? 'default' : 'ghost'}
+                size="icon-sm"
+                onClick={() => setTheme('dark')}
+                className="h-8 w-8"
+              >
+                <Moon className="h-4 w-4" />
+                <span className="sr-only">Dark theme</span>
+              </Button>
+              <Button
+                variant={theme === 'americana' ? 'default' : 'ghost'}
+                size="icon-sm"
+                onClick={() => setTheme('americana')}
+                className="h-8 w-8"
+              >
+                <Flag className="h-4 w-4" />
+                <span className="sr-only">Americana theme</span>
+              </Button>
+            </div>
 
             <Link href="/cart">
               <Button variant="ghost" size="icon-sm" className="relative">
